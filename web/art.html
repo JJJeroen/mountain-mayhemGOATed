@@ -1,0 +1,11 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Mountain Mayhem art</title>
+<style>body{font-family:system-ui;background:#cfe8f7;margin:16px}h2{margin:12px 0 4px}.row{display:flex;flex-wrap:wrap;gap:6px;background:#fff8;border-radius:12px;padding:8px}.c{text-align:center;font-size:12px}</style>
+<div id=app></div>
+<script type=module>
+import {goatSvg,ramSvg,avatarSvg,AVATARS} from './art.js';
+const ids=['blue','yellow','green','orange','white'];let h='';
+for(const e of ['neutral','effort','dizzy','love']){h+=`<h2>${e}</h2><div class=row>`+ids.map(i=>`<div class=c>${goatSvg(i,e,{size:150})}</div>`).join('')+'</div>';}
+h+=`<h2>mud</h2><div class=row>`+ids.map(i=>`<div class=c>${goatSvg(i,'effort',{mud:true,size:150})}</div>`).join('')+`<div class=c>${ramSvg(240)}</div></div>`;
+h+=`<h2>avatars</h2><div class=row>`+AVATARS.map((a,i)=>`<div class=c>${avatarSvg(i,110)}<br>${a.name}</div>`).join('')+'</div>';
+app.innerHTML=h;
+</script>
