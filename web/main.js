@@ -2,11 +2,14 @@
 import {
   GOAT_IDS, GOATS, newGame, legalActions, apply, ranking, goatSpace, trickOptions, pledgeValue, DEFAULT_CONFIG,
 } from "./engine.js";
+import { sfx, setSoundEnabled, unlockAudio } from "./sound.js";
 import { goatSvg, ramSvg, avatarSvg, AVATARS, GOAT_BLURB } from "./art.js";
 
 const $ = (id) => document.getElementById(id);
 const COL = { blue: "#4f95e8", yellow: "#f7c52b", green: "#58b868", orange: "#f5882d", white: "#f8f4ee" };
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms * (settings.fast ? 0.45 : 1)));
+const SPEEDS = { slow: 1.8, normal: 1, fast: 0.45 };
+const mult = () => SPEEDS[settings.speed] ?? 1;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms * mult()));
 const gName = (g) => GOATS[g].name;
 const ord = (n) => ["1st", "2nd", "3rd", "4th", "5th"][n] || n + "th";
 
@@ -22,9 +25,12 @@ const TRICKS = {
 };
 
 // ---------------------------------------------------------------- settings
-let settings = { name: "You", avatar: 0, opponents: 3, level: "normal", fast: false, length: "quick" };
+let settings = { name: "You", avatar: 0, opponents: 3, level: "normal", speed: "normal", sound: true, length: "quick" };
 const LENGTHS = { quick: { finish: 15, ram: 12, mud: [5, 7] }, long: {} }; // quick = ~100 turns, long = ~150 (see sim notes)
 try { Object.assign(settings, JSON.parse(localStorage.getItem("mm-settings") || "{}")); } catch { /* private mode */ }
+if (settings.fast) settings.speed = "fast"; // migrate the old Normal/Fast switch
+delete settings.fast;
+setSoundEnabled(settings.sound);
 const saveSettings = () => { try { localStorage.setItem("mm-settings", JSON.stringify(settings)); } catch { /* ignore */ } };
 const LEVELS = { easy: { n: 8, nFinal: 8, eps: 0.3 }, normal: { n: 16, nFinal: 12, eps: 0.06 }, hard: { n: 36, nFinal: 20, eps: 0 } };
 
@@ -232,7 +238,7 @@ function renderHud() {
   const canScout = legal.some((a) => a.type === "scout");
   const canFinal = legal.some((a) => a.type === "final");
   $("actions").innerHTML = `
-    <div class="hint">${s.finished ? "" : myTurn ? "Your turn: tap a goat above to bet, or choose an action" : `${esc(seats[s.turn].name)} is thinking...`}</div>
+    <div class="hint">${s.finished ? "" : myTurn ? "Your turn: tap a goat above to bet, or choose an action" : `<span class="turnb">${avatarSvg(seats[s.turn].avatar, 24)}<b>${esc(seats[s.turn].name)}</b> is thinking…</span>`}</div>
     <button class="abtn run" id="aRun" ${myTurn ? "" : "disabled"}><span class="ic">🏃</span>Run</button>
     <button class="abtn trick" id="aTrick" ${canTrick ? "" : "disabled"}><span class="ic">🃏</span>Trick (${me.hand.length})</button>
     <button class="abtn scout" id="aScout" ${canScout ? "" : "disabled"}><span class="ic">👀</span>Scout</button>
@@ -250,6 +256,7 @@ function toast(html, ms = 1500) {
   t.className = "tst";
   t.innerHTML = html;
   $("toast").appendChild(t);
+  ms *= Math.max(1, mult());
   setTimeout(() => t.classList.add("out"), ms);
   setTimeout(() => t.remove(), ms + 450);
 }
@@ -380,13 +387,14 @@ function showOverlay(html, { center = true } = {}) {
 }
 function hideOverlay() { $("overlay").hidden = true; $("overlay").innerHTML = ""; }
 
-async function showRoll(ev) {
+async function showRoll(ev, pi) {
   const die = GOATS[ev.goat].die;
-  const o = showOverlay(`<div class="rollbox"><div>${goatSvg(ev.goat, "effort", { size: 130 }).replace("<svg ", '<svg class="gt" ')}</div><b>${gName(ev.goat)} runs!</b><div><span class="die roll" id="dv">?</span></div><div class="note" id="dn"></div></div>`);
+  const o = showOverlay(`<div class="rollbox"><div>${goatSvg(ev.goat, "effort", { size: 130 }).replace("<svg ", '<svg class="gt" ')}</div><b>${gName(ev.goat)} runs!</b>${pi === undefined ? "" : `<small class="by">${esc(seatLabel(pi))}'s run</small>`}<div><span class="die roll" id="dv">?</span></div><div class="note" id="dn"></div></div>`);
   const dv = o.querySelector("#dv");
-  for (let i = 0; i < 6; i++) { dv.textContent = die[(Math.random() * 6) | 0]; await sleep(80); }
+  for (let i = 0; i < 6; i++) { dv.textContent = die[(Math.random() * 6) | 0]; sfx("tick"); await sleep(80); }
   dv.classList.remove("roll");
   dv.textContent = ev.roll;
+  sfx("coin");
   let note = "";
   if (ev.slowed) note = ev.steps !== ev.roll ? `🟤 slowed to ${ev.steps}!` : "";
   if (!ev.slowed && ev.steps > ev.roll) note = `🥕 +1 snack → ${ev.steps}`;
@@ -397,6 +405,7 @@ async function showRoll(ev) {
 }
 
 function confetti() {
+  sfx("win");
   const c = document.createElement("div");
   c.className = "confetti";
   const cols = ["#ff6a3d", "#ffd34a", "#4f95e8", "#58b868", "#ff7aa8", "#fff"];
@@ -415,6 +424,7 @@ function confetti() {
 const seatLabel = (i) => (i === 0 ? "You" : seats[i].name);
 
 async function showStageScore(before, hayAfter, rank) {
+  sfx("stage");
   const rows = s.players.map((p, i) => {
     const pills = [];
     for (const l of before[i].legs) {
@@ -445,6 +455,7 @@ function countUp(el, to, ms) {
 }
 
 async function showFinal(preFinal) {
+  sfx("stage");
   const rank = ranking(s);
   const winner = rank[0], loser = rank.at(-1);
   const reveals = s.finalBets.map((b) => {
@@ -520,11 +531,13 @@ async function playTurn(myGen) {
   let act;
   renderHud();
   if (seats[pi].human) {
+    sfx("yourTurn");
     act = await new Promise((res) => { humanResolve = res; renderHud(); });
   } else {
+    $("toast").innerHTML = ""; // drop the previous player's message so it is clear whose turn this is
     const t0 = performance.now();
     act = await botDecide(pi);
-    await sleep(Math.max(0, 750 - (performance.now() - t0)));
+    await new Promise((r) => setTimeout(r, Math.max(0, 1100 * mult() - (performance.now() - t0))));
   }
   if (myGen !== gen) return false;
   const before = s.players.map((p) => ({ legs: p.legs.map((l) => ({ ...l })), hoofs: p.hoofs, cheers: p.cheers.map((c) => ({ ...c })), hay: p.hay }));
@@ -534,15 +547,18 @@ async function playTurn(myGen) {
   const head = events[0];
   const text = describe(head, pi);
   log(text);
-  toast(`${avatarSvg(seats[pi].avatar, 28)}<span>${esc(text)} ${actionIcon(act)}</span>`, 1700);
-  if (!seats[pi].human) renderHud();
+  toast(`${avatarSvg(seats[pi].avatar, 28)}<span>${esc(text)} ${actionIcon(act)}</span>`, 2200);
+  sfx(act.type === "leg" ? "coin" : act.type === "final" ? "pledge" : act.type === "trick" ? "trick" : act.type === "scout" ? "scout" : "click");
+  if (!seats[pi].human) { renderHud(); await sleep(1100); } // let the player read who did what before the roll covers it
+  if (myGen !== gen) return false;
 
   for (const ev of events) {
     if (ev.t === "move") {
-      await showRoll(ev);
+      await showRoll(ev, act.type === "run" ? pi : undefined);
       if (myGen !== gen) return false;
       setExpr(ev.goat, ev.ram ? "love" : ev.slowed ? "effort" : "effort", ev.ram ? 2600 : 1400);
       hop(ev.goat);
+      sfx(ev.slowed ? "mud" : "land");
       renderGoats();
       renderHud();
       log(`${gName(ev.goat)} rolled ${ev.roll}${ev.slowed ? " (slowed)" : ""} and moved ${ev.from} → ${ev.to > s.cfg.finish ? "FINISH" : ev.to}${ev.carried.length ? ", carrying " + ev.carried.map(gName).join(", ") : ""}`);
@@ -554,6 +570,7 @@ async function playTurn(myGen) {
         toast(`<span>💘 ${gName(ev.goat)} fell for the Ram and goes to last place!</span>`, 2300);
         log(`${gName(ev.goat)} fell for the Ram`);
         burst(ev.goat, "💕");
+        sfx("ram");
         await sleep(1500);
         if (myGen !== gen) return false;
       }
@@ -579,6 +596,7 @@ async function playTurn(myGen) {
     renderGoats(); renderHud();
     toast(`<span>🌄 Stage ${s.stage} begins. New Herd deck shuffled!</span>`, 1800);
   }
+  if (!seats[pi].human) await sleep(450);
   return !s.finished;
 }
 
@@ -608,6 +626,22 @@ function pickOpponents(n, mine) {
   for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
   return pool.slice(0, n);
 }
+function settingsRows() {
+  const seg = (id, key, items) => `<div class="seg" id="${id}">${items.map(([v, t]) => `<button data-v="${v}" class="${String(settings[key]) === String(v) ? "on" : ""}">${t}</button>`).join("")}</div>`;
+  return `<label class="l">Game speed</label>${seg("spd", "speed", [["slow", "🐢 Slow"], ["normal", "Normal"], ["fast", "🐇 Fast"]])}
+      <label class="l">Sound effects</label>${seg("snd", "sound", [[true, "🔊 On"], [false, "🔇 Off"]])}`;
+}
+function wireSettings(root, redraw) {
+  root.querySelectorAll("#spd button").forEach((b) => (b.onclick = () => { settings.speed = b.dataset.v; saveSettings(); redraw(); }));
+  root.querySelectorAll("#snd button").forEach((b) => (b.onclick = () => {
+    settings.sound = b.dataset.v === "true"; setSoundEnabled(settings.sound); saveSettings(); unlockAudio(); redraw(); sfx("coin");
+  }));
+}
+function openSettings() {
+  const draw = () => { const p = openSheet(`<h2>⚙ Settings</h2><div style="text-align:left">${settingsRows()}</div>`); wireSettings(p, draw); };
+  draw();
+}
+
 function startGame() {
   gen++;
   const myGen = gen;
@@ -644,7 +678,7 @@ function showStart() {
       <label class="l">Opponents (AI)</label><div class="seg" id="opp">${[2, 3].map((n) => `<button data-n="${n}" class="${settings.opponents === n ? "on" : ""}">${n} opponents</button>`).join("")}</div>
       <label class="l">Race length</label><div class="seg" id="len">${[["quick", "Quick (15)"], ["long", "Long (20)"]].map(([v, t]) => `<button data-len="${v}" class="${settings.length === v ? "on" : ""}">${t}</button>`).join("")}</div>
       <label class="l">AI level</label><div class="seg" id="lvl">${["easy", "normal", "hard"].map((l) => `<button data-l="${l}" class="${settings.level === l ? "on" : ""}">${l}</button>`).join("")}</div>
-      <label class="l">Speed</label><div class="seg" id="spd">${[[false, "Normal"], [true, "Fast"]].map(([v, t]) => `<button data-f="${v}" class="${settings.fast === v ? "on" : ""}">${t}</button>`).join("")}</div>
+      ${settingsRows()}
       </div>
       <div class="row" style="justify-content:center;margin-top:14px"><button class="btn go big" id="play">Play!</button><button class="btn alt" id="how">How to play</button></div></div>`);
     o.querySelector("#nm").oninput = (e) => { settings.name = e.target.value; saveSettings(); };
@@ -652,13 +686,14 @@ function showStart() {
     o.querySelectorAll("#opp button").forEach((b) => (b.onclick = () => { settings.opponents = +b.dataset.n; saveSettings(); draw(); }));
     o.querySelectorAll("#len button").forEach((b) => (b.onclick = () => { settings.length = b.dataset.len; saveSettings(); draw(); }));
     o.querySelectorAll("#lvl button").forEach((b) => (b.onclick = () => { settings.level = b.dataset.l; saveSettings(); draw(); }));
-    o.querySelectorAll("#spd button").forEach((b) => (b.onclick = () => { settings.fast = b.dataset.f === "true"; saveSettings(); draw(); }));
-    o.querySelector("#play").onclick = () => { settings.name = o.querySelector("#nm").value.trim() || "You"; saveSettings(); startGame(); };
+    wireSettings(o, draw);
+    o.querySelector("#play").onclick = () => { unlockAudio(); settings.name = o.querySelector("#nm").value.trim() || "You"; saveSettings(); startGame(); };
     o.querySelector("#how").onclick = openHelp;
   };
   draw();
 }
 
+$("btnSet").onclick = openSettings;
 $("btnHelp").onclick = openHelp;
 $("btnLog").onclick = openLog;
 let rz;
