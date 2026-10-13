@@ -13,7 +13,7 @@ export const TRICK_COPIES = { headbutt: 3, snack: 3, mudslide: 2, wobble: 3, swa
 export const DEFAULT_CONFIG = {
   finish: 20, mud: [6, 8], ram: 17, startHay: 3,
   legValues: [6, 4, 2], pledgeValues: [10, 8, 7, 6, 5, 4], hoofHay: 1,
-  startHand: 3, handMax: 4, mudHalves: true, ramCrossOnly: true, finalPenalty: 2, cheerHay: 2,
+  startHand: 3, handMax: 4, mudHalves: true, ramCrossOnly: true, ramOnce: true, finalPenalty: 2, cheerHay: 2,
 };
 
 // ---- seeded rng (state kept in o.rng so a board can be cloned and replayed) ----
@@ -95,7 +95,7 @@ export function moveGoat(b, goat, roll) {
 export function resetStageBoard(b) {
   b.deck = shuffle(b, [...GOAT_IDS]);
   b.played = [];
-  b.ramUsed = false;
+  if (!b.cfg.ramOnce) b.ramUsed = false;
   b.boosts = {};
   b.slows = {};
   b.ears = {};
@@ -284,7 +284,7 @@ export function apply(s, act) {
     case "scout": p.knownTop = s.deck[0]; break;
     case "final": {
       p.finalsLeft.splice(p.finalsLeft.indexOf(act.kind), 1);
-      s.finalBets.push({ player: pi, goat: act.goat, kind: act.kind, value: pledgeValue(s) });
+      s.finalBets.push({ player: pi, goat: act.goat, kind: act.kind, value: pledgeValue(s), stage: s.stage });
       break;
     }
     case "run": {

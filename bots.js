@@ -57,7 +57,7 @@ function relGain(after, before, p) {
  * opts.n: stage playouts per decision, opts.finalMargin: how much better than 0 a final bet must look,
  * opts.scoutValue: value assigned to scouting, opts.eps: chance of a random move (human-like slips).
  */
-export function smartBot({ n = 24, nFinal = 16, finalMargin = 0.5, scoutValue = 0.25, eps = 0, maxTricks = 10 } = {}) {
+export function smartBot({ n = 24, nFinal = 16, finalMargin = 0.5, minProb = 0.55, scoutValue = 0.25, eps = 0, maxTricks = 10 } = {}) {
   const o = { rng: (Math.random() * 2 ** 31) | 0 };
   const fn = (s, p) => {
     const legal = legalActions(s, p);
@@ -155,6 +155,7 @@ export function smartBot({ n = 24, nFinal = 16, finalMargin = 0.5, scoutValue = 
         if (a.type !== "final") continue;
         const prob = (a.kind === "winner" ? win[a.goat] : lose[a.goat]) / nFinal;
         const ev = prob * value - (1 - prob) * s.cfg.finalPenalty;
+        if (prob < minProb) continue;
         consider(a, ev - finalMargin);
       }
     }
