@@ -36,7 +36,7 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 2. **Play a trick.** Play one trick card from your hand, face up, and do what it says (see Tricks). Used cards go to the discard pile. Earns nothing by itself.
 3. **Run.** Flip the top card of the Herd deck, roll that goat's die, and move it. Take a **hoof token**: +1 hay at stage end.
 4. **Scout.** Secretly look at the next card in the Herd deck. Other players see that you scouted but not what you saw. Costs your turn, earns nothing.
-5. **Summit pledge.** Secretly pledge a goat as the **Winner** or the **Loser** of the whole race. You get one of each per game (on two different goats) and a pledge can never be taken back. A pledge is worth more the earlier you make it: **10 / 8 / 7 / 6 / 5 / 4 hay** in stage 1 / 2 / 3 / 4 / 5 / 6+.
+5. **Summit pledge.** Secretly pledge a goat as the **Winner** or the **Loser** of the whole race. You get one of each per game (on two different goats) and a pledge can never be taken back. A pledge is worth more the earlier you make it: **10 / 8 / 7 / 6 / 5 / 4 hay** in stage 1 / 2 / 3 / 4 / 5 / 6+. A wrong pledge costs 3.
 
 ## Tricks (v1 set, face-up, one per action)
 | Card | Effect |
@@ -71,7 +71,7 @@ Then discard leg-bet tokens, reset the Herd deck, and the next player starts a n
 ## End of the race
 The race ends when the first goat crosses the finish line (after space 20, or 15 in the quick game). Do a last stage scoring. Then reveal every Summit pledge:
 - Correct: the hay value it carries (fixed when you made it, see action 5).
-- Wrong: **-2 hay**.
+- Wrong: **-3 hay**.
 - A Loser pledge is correct if that goat finishes last.
 
 Most hay wins. **Tiebreak:** most correct pledges; still equal = shared win.
@@ -81,12 +81,12 @@ Most hay wins. **Tiebreak:** most correct pledges; still equal = shared win.
 ## Balance notes (simulation, smart bots, quick 15-space track, 1000 games each)
 | Seats | Turns | Goat race wins | Seat wins | Pledges flip the winner | Ties |
 |---|---|---|---|---|---|
-| 4 | 97 | 19-21% each | 23-27% | 35% | 5.3% |
-| 3 | 90 | 19-21% each | 31-35% | 26% | 3.2% |
-| 2 | 81 | 19-22% each | 50/50 | 17% | 3.0% |
+| 4 | 96 | 18-24% each | 23-27% | 14% | 5.3% |
+| 3 | 89 | 19-21% each | 31-35% | 8% | 3.8% |
+| 2 | 80 | 19-22% each | 50/50 | 6% | 2.1% |
 - Quick track: ~5 stages, mid-race goat leader wins ~30%, ~6 lead changes per race, ~33% of decisions are near-ties.
-- Hay per player per game (4 seats): leg bets ~14, hoofs ~6, Cheer ~1.5, pledges ~1.0. Mean final hay ~25 (about 32 with 3 seats, 46 with 2: fewer players share the same tokens, so inflation grows as seats drop).
-- **Hedging test.** Under the old rule (a final bet on every goat, payout by placement order), a bot that bet five goats from stage 1 earned +3.7 final hay over the table and won about 1-2 points more often (25.5-26.7% vs 24.4%, roughly noise). With Summit Pledges (one Winner + one Loser, timing-based payout) the same bot gains nothing: win rate 22.9-23.8% vs 24.0% baseline.
+- Hay per player per game (4 seats): leg bets ~14, hoofs ~6, Cheer ~1.5, pledges ~3.5. Mean final hay ~28 (about 36 with 3 seats, 49 with 2: fewer players share the same tokens, so inflation grows as seats drop).
+- **Hedging test.** Under the old rule (a final bet on every goat, payout by placement order), a bot that bet five goats from stage 1 earned +3.7 final hay over the table and won about 1-2 points more often (25.5-26.7% vs 24.4%, roughly noise). With Summit Pledges (one Winner + one Loser, timing-based payout) the same bot gains nothing: win rate 22.9-23.8% vs 24.0% baseline; with the -3 penalty a blind stage-1 hedger loses about 2 hay against the table.
 - Tricks (average best EV): Swap ~1.0, Cheer ~0.8, Whistle ~0.8, Snack ~0.6, Headbutt ~0.5, Mud Slide ~0.4, Wobble ~0.3, Earplugs ~0.2.
 
 ## Open questions / knobs
@@ -98,4 +98,4 @@ Most hay wins. **Tiebreak:** most correct pledges; still equal = shared win.
 - **Ram detail:** is it fair that riders profit when their carrier gets heartbroken? Playtest.
 - **Name/IP:** run trademark and store searches for "Mountain Mayhem" before branding (deferred by the owner).
 - **Hay inflation:** payouts could be scaled down; held back until a playtest shows whether it matters.
-- **Pledge ladder** (10/8/7/6/5/4, wrong -2) is untuned beyond the hedging test: check whether early pledges are too attractive.
+- **Pledge ladder** (10/8/7/6/5/4, wrong -3): with -2 a blind stage-1 guess was +EV (0.2x10 - 0.8x2), so everyone pledged at once; -3 makes blind early pledges lose and pushes sensible pledges to stages 3-5. Cost: pledges now flip the winner far less (see table). Revisit with playtests.

@@ -32,7 +32,7 @@ if (settings.fast) settings.speed = "fast"; // migrate the old Normal/Fast switc
 delete settings.fast;
 setSoundEnabled(settings.sound);
 const saveSettings = () => { try { localStorage.setItem("mm-settings", JSON.stringify(settings)); } catch { /* ignore */ } };
-const LEVELS = { easy: { n: 8, nFinal: 8, eps: 0.3 }, normal: { n: 16, nFinal: 12, eps: 0.06 }, hard: { n: 36, nFinal: 20, eps: 0 } };
+const LEVELS = { easy: { n: 8, nFinal: 8, nConfirm: 8, eps: 0.3 }, normal: { n: 16, nFinal: 12, nConfirm: 40, eps: 0.06 }, hard: { n: 36, nFinal: 20, nConfirm: 64, eps: 0 } };
 
 // ---------------------------------------------------------------- game state
 let s = null; // engine state
