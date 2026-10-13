@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mountain Mayhem</string>
+    <string name="title_activity_main">Mountain Mayhem</string>
+    <string name="package_name">com.jjjeroen.mountainmayhem</string>
+    <string name="custom_url_scheme">com.jjjeroen.mountainmayhem</string>
+</resources>
