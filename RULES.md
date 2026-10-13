@@ -56,8 +56,8 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 - If it ends on a space with goats, it lands **on top** of them.
 - Ranking: furthest space leads; within a stack, the goat on top leads.
 
-## The Ram (once per stage)
-The first goat in each stage to **cross** space 17 (start below it, end on or past it) falls madly in love with the Ram. The goat that moved (the bottom goat of a moving stack) is immediately moved to the **last-place space and placed underneath** whichever goat currently ranks last. Its riders stay where they landed. The Ram resets at the start of each stage.
+## The Ram (once per race)
+Only the first goat of the whole race to **cross** space 17 (start below it, end on or past it) falls madly in love with the Ram. The goat that moved (the bottom goat of a moving stack) is immediately moved to the **last-place space and placed underneath** whichever goat currently ranks last. Its riders stay where they landed. After that the Ram is spent: every later goat walks straight past.
 
 ## End of a stage: scoring
 Based on the current ranking:

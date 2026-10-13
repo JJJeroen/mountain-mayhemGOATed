@@ -25,6 +25,7 @@ function cfgFromArgs() {
   if (args.penalty) c.finalPenalty = num("penalty");
   if (args.legs) c.legValues = list("legs");
   if (args.cheer) c.cheerHay = num("cheer");
+  if (args.ramonce !== undefined) c.ramOnce = num("ramonce") === 1;
   if (args.ramcross !== undefined) c.ramCrossOnly = num("ramcross") === 1;
   return c;
 }
@@ -35,12 +36,12 @@ function runGames(count, seedBase) {
   const mode = args.mode || "balance";
   const PL = num("players", 4);
   const n = num("n", 16);
-  const sm = () => smartBot({ n, finalMargin: num("margin", 0.5), maxTricks: 99 });
+  const sm = () => smartBot({ n, finalMargin: num("margin", 0.5), minProb: num("minprob", 0.55), maxTricks: 99 });
   const A = { games: 0, stages: 0, turns: 0, ramTriggers: 0, runs: 0, mudSlowed: 0, leadChanges: 0,
     actions: {}, tricks: {}, winGoat: {}, loseGoat: {}, seatWins: Array(num("players", 4)).fill(0), ties: 0, hayN: 0, haySum: 0,
     src: { leg: 0, hoof: 0, cheer: 0, final: 0 }, finalSwing: 0, finalSwingable: 0, winnerFirstAtMid: 0, leaderMidIsWinner: 0,
     marginSum: 0, decisions: 0, close03: 0, close01: 0, chosen: {}, trickHeld: {}, trickEvSum: {}, trickEvN: {}, trickChosen: {},
-    botWins: 0, botGames: 0, finalsPlaced: 0 };
+    botWins: 0, botGames: 0, finalsPlaced: 0, pledgeStageSum: 0 };
   for (const g of GOAT_IDS) A.winGoat[g] = A.loseGoat[g] = 0;
   for (let gi = 0; gi < count; gi++) {
     const s = newGame({ players: PL, seed: seedBase + gi, cfg: cfgFromArgs() });
@@ -74,6 +75,7 @@ function runGames(count, seedBase) {
     for (const k in s.stats.actions) A.actions[k] = (A.actions[k] || 0) + s.stats.actions[k];
     for (const k in s.stats.tricks) A.tricks[k] = (A.tricks[k] || 0) + s.stats.tricks[k];
     A.finalsPlaced += s.finalBets.length;
+    for (const b of s.finalBets) A.pledgeStageSum += b.stage / s.stats.stages;
     A.winGoat[rank[0]]++; A.loseGoat[rank.at(-1)]++;
     const hays = s.players.map((p) => p.hay);
     const winners = argmaxSet(hays);
@@ -113,7 +115,7 @@ function report(a) {
   console.log(`LENGTH   stages ${f(a.stages / a.games)}  turns ${f(a.turns / a.games, 0)}  mean hay ${f(a.haySum / a.hayN)}  ties ${pct(a.ties, a.games)}`);
   console.log(`BOARD    Ram fires in ${pct(a.ramTriggers, a.stages)} of stages  mud-slowed ${pct(a.mudSlowed, a.runs)} of runs  winners: ${GOAT_IDS.map((g) => pct(a.winGoat[g], a.games)).join(" ")}`);
   const totalA = Object.values(a.actions).reduce((p, c) => p + c, 0);
-  console.log(`ACTIONS  ${Object.entries(a.actions).map(([k, v]) => `${k} ${pct(v, totalA)}`).join("  ")}   finals placed/game ${f(a.finalsPlaced / a.games)}`);
+  console.log(`ACTIONS  ${Object.entries(a.actions).map(([k, v]) => `${k} ${pct(v, totalA)}`).join("  ")}   finals placed/game ${f(a.finalsPlaced / a.games)}  avg pledge timing ${pct(a.pledgeStageSum, a.finalsPlaced)} of the way through`);
   const per = a.games * num("players", 4);
   console.log(`HAY/PLAYER/GAME  leg ${f(a.src.leg / per)}  hoof ${f(a.src.hoof / per)}  cheer ${f(a.src.cheer / per)}  final ${f(a.src.final / per)}`);
   console.log(`FUN      lead changes/race ${f(a.leadChanges / a.games)}  final bets flip the winner in ${pct(a.finalSwing, a.finalSwingable)}  winner already 1st at midpoint ${pct(a.winnerFirstAtMid, a.games)}  mid goat-leader wins race ${pct(a.leaderMidIsWinner, a.games)}`);

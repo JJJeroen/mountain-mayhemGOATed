@@ -25,7 +25,7 @@ const TRICKS = {
 };
 
 // ---------------------------------------------------------------- settings
-let settings = { name: "You", avatar: 0, opponents: 3, level: "normal", speed: "normal", sound: true, length: "quick" };
+let settings = { name: "You", avatar: 0, opponents: 3, level: "normal", speed: "normal", sound: true, length: "quick", hints: true };
 const LENGTHS = { quick: { finish: 15, ram: 12, mud: [5, 7] }, long: {} }; // quick = ~100 turns, long = ~150 (see sim notes)
 try { Object.assign(settings, JSON.parse(localStorage.getItem("mm-settings") || "{}")); } catch { /* private mode */ }
 if (settings.fast) settings.speed = "fast"; // migrate the old Normal/Fast switch
@@ -194,6 +194,13 @@ function shake(g) {
 }
 
 // ---------------------------------------------------------------- HUD
+const sub = (t) => (settings.hints ? `<small class="sb">${t}</small>` : "");
+/** "Learn to play" coaching line for the human's turn. */
+function coachText(me) {
+  const stageLeft = s.deck.length;
+  if (me.knownTop) return `👀 Only <b>you</b> know <b>${gName(me.knownTop)}</b> runs next (glowing card above). Use it: take a leg bet before it moves, or Run to play it out. One action per turn.`;
+  return `<b>Pick one action</b> (it ends your turn): tap a goat to bet it finishes the stage 1st (6/4/2 hay, 2nd place +1, wrong −1). <b>Run</b> plays the next Herd card (+1 hoof hay). ${stageLeft} card${stageLeft === 1 ? "" : "s"} left this stage.`;
+}
 function renderHud() {
   $("stageNo").textContent = s.stage;
   const me = s.players[0];
@@ -238,11 +245,11 @@ function renderHud() {
   const canScout = legal.some((a) => a.type === "scout");
   const canFinal = legal.some((a) => a.type === "final");
   $("actions").innerHTML = `
-    <div class="hint">${s.finished ? "" : myTurn ? "Your turn: tap a goat above to bet, or choose an action" : `<span class="turnb">${avatarSvg(seats[s.turn].avatar, 24)}<b>${esc(seats[s.turn].name)}</b> is thinking…</span>`}</div>
-    <button class="abtn run" id="aRun" ${myTurn ? "" : "disabled"}><span class="ic">🏃</span>Run</button>
-    <button class="abtn trick" id="aTrick" ${canTrick ? "" : "disabled"}><span class="ic">🃏</span>Trick (${me.hand.length})</button>
-    <button class="abtn scout" id="aScout" ${canScout ? "" : "disabled"}><span class="ic">👀</span>Scout</button>
-    <button class="abtn final" id="aFinal" ${canFinal ? "" : "disabled"}><span class="ic">🎯</span>Pledge (${me.finalsLeft.length})</button>`;
+    <div class="hint ${settings.hints && myTurn ? "coach" : ""}">${s.finished ? "" : myTurn ? (settings.hints ? coachText(me) : "Your turn: tap a goat above to bet, or choose an action") : `<span class="turnb">${avatarSvg(seats[s.turn].avatar, 24)}<b>${esc(seats[s.turn].name)}</b> is thinking…</span>`}</div>
+    <button class="abtn run" id="aRun" ${myTurn ? "" : "disabled"}><span class="ic">🏃</span>Run${sub("roll the next goat")}</button>
+    <button class="abtn trick" id="aTrick" ${canTrick ? "" : "disabled"}><span class="ic">🃏</span>Trick (${me.hand.length})${sub("play a card")}</button>
+    <button class="abtn scout" id="aScout" ${canScout ? "" : "disabled"}><span class="ic">👀</span>Scout${sub("peek next goat")}</button>
+    <button class="abtn final" id="aFinal" ${canFinal ? "" : "disabled"}><span class="ic">🎯</span>Pledge (${me.finalsLeft.length})${sub("bet on the winner")}</button>`;
   $("aRun").onclick = () => submit({ type: "run" });
   $("aScout").onclick = () => submit({ type: "scout" });
   $("aTrick").onclick = openTricks;
@@ -251,11 +258,12 @@ function renderHud() {
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const humanTurn = () => !!humanResolve;
 
-function toast(html, ms = 1500) {
+function toast(html, ms = 1500, keep = false) {
   const t = document.createElement("div");
   t.className = "tst";
   t.innerHTML = html;
   $("toast").appendChild(t);
+  if (keep) t.classList.add("keep");
   ms *= Math.max(1, mult());
   setTimeout(() => t.classList.add("out"), ms);
   setTimeout(() => t.remove(), ms + 450);
@@ -361,7 +369,7 @@ function openHelp() {
   <h3>The path</h3>
   <ul><li>${c.finish} spaces then the finish. A goat that ends on a crowded space <b>climbs on top</b>; a goat carries everyone on its back.</li>
   <li><b>Mud</b> (spaces ${c.mud[0]}-${c.mud[1]}): a goat starting its move there goes half as far. Mudlark doesn't care.</li>
-  <li><b>The Ram</b> (space ${c.ram}): the first goat each stage to <i>cross</i> it falls in love and drops <i>under</i> the last-place goat. Its riders stay put!</li></ul>
+  <li><b>The Ram</b> (space ${c.ram}): only the first goat of the whole race to <i>cross</i> it falls in love and drops <i>under</i> the last-place goat. Its riders stay put!</li></ul>
   <h3>A stage = five Herd cards</h3>
   <p>Every goat runs exactly once per stage, in random order. On your turn do <b>one</b> thing:</p>
   <div class="tlist">
@@ -534,7 +542,7 @@ async function playTurn(myGen) {
     sfx("yourTurn");
     act = await new Promise((res) => { humanResolve = res; renderHud(); });
   } else {
-    $("toast").innerHTML = ""; // drop the previous player's message so it is clear whose turn this is
+    $("toast").querySelectorAll(".tst:not(.keep)").forEach((t) => t.remove()); // drop the previous player's message so it is clear whose turn this is
     const t0 = performance.now();
     act = await botDecide(pi);
     await new Promise((r) => setTimeout(r, Math.max(0, 1100 * mult() - (performance.now() - t0))));
@@ -548,6 +556,9 @@ async function playTurn(myGen) {
   const text = describe(head, pi);
   log(text);
   toast(`${avatarSvg(seats[pi].avatar, 28)}<span>${esc(text)} ${actionIcon(act)}</span>`, 2200);
+  if (settings.hints && seats[pi].human && (act.type === "scout" || (act.type === "trick" && act.card === "whistle" && !act.args.bury))) {
+    toast(`<span>👀 You peeked: <b>${gName(s.players[pi].knownTop)}</b> runs next. Only you know, shown as the glowing card in the top bar. Bet on it, or Run to move it.</span>`, 6000, true);
+  }
   sfx(act.type === "leg" ? "coin" : act.type === "final" ? "pledge" : act.type === "trick" ? "trick" : act.type === "scout" ? "scout" : "click");
   if (!seats[pi].human) { renderHud(); await sleep(1100); } // let the player read who did what before the roll covers it
   if (myGen !== gen) return false;
@@ -559,6 +570,7 @@ async function playTurn(myGen) {
       setExpr(ev.goat, ev.ram ? "love" : ev.slowed ? "effort" : "effort", ev.ram ? 2600 : 1400);
       hop(ev.goat);
       sfx(ev.slowed ? "mud" : "land");
+      sfx(ev.slowed ? "annoyed" : "baa", ev.goat, 120);
       renderGoats();
       renderHud();
       log(`${gName(ev.goat)} rolled ${ev.roll}${ev.slowed ? " (slowed)" : ""} and moved ${ev.from} → ${ev.to > s.cfg.finish ? "FINISH" : ev.to}${ev.carried.length ? ", carrying " + ev.carried.map(gName).join(", ") : ""}`);
@@ -571,6 +583,7 @@ async function playTurn(myGen) {
         log(`${gName(ev.goat)} fell for the Ram`);
         burst(ev.goat, "💕");
         sfx("ram");
+        sfx("annoyed", ev.goat, 700);
         await sleep(1500);
         if (myGen !== gen) return false;
       }
@@ -603,12 +616,12 @@ async function playTurn(myGen) {
 async function animateTrick(act) {
   const a = act.args || {};
   const goats = [a.goat, a.a, a.b].filter(Boolean);
-  if (act.card === "wobble" || act.card === "headbutt") for (const g of goats) { setExpr(g, "dizzy", 1800); shake(g); burst(g, "💫"); }
-  else if (act.card === "swap") for (const g of goats) { setExpr(g, "dizzy", 1400); hop(g); }
-  else if (act.card === "snack") { setExpr(a.goat, "love", 1600); burst(a.goat, "🥕"); }
-  else if (act.card === "mudslide") { setExpr(a.goat, "effort", 1600); burst(a.goat, "🟤"); }
+  if (act.card === "wobble" || act.card === "headbutt") for (const g of goats) { setExpr(g, "dizzy", 1800); shake(g); burst(g, "💫"); sfx("annoyed", g, 150); }
+  else if (act.card === "swap") for (const g of goats) { setExpr(g, "dizzy", 1400); hop(g); sfx("annoyed", g, 150); }
+  else if (act.card === "snack") { setExpr(a.goat, "love", 1600); burst(a.goat, "🥕"); sfx("baa", a.goat, 150); }
+  else if (act.card === "mudslide") { setExpr(a.goat, "effort", 1600); burst(a.goat, "🟤"); sfx("annoyed", a.goat, 150); }
   else if (act.card === "earplugs") burst(a.goat, "🎧");
-  else if (act.card === "cheer") burst(a.goat, "📣");
+  else if (act.card === "cheer") { burst(a.goat, "📣"); sfx("baa", a.goat, 150); }
   renderGoats();
   await sleep(goats.length ? 900 : 300);
 }
@@ -629,10 +642,12 @@ function pickOpponents(n, mine) {
 function settingsRows() {
   const seg = (id, key, items) => `<div class="seg" id="${id}">${items.map(([v, t]) => `<button data-v="${v}" class="${String(settings[key]) === String(v) ? "on" : ""}">${t}</button>`).join("")}</div>`;
   return `<label class="l">Game speed</label>${seg("spd", "speed", [["slow", "🐢 Slow"], ["normal", "Normal"], ["fast", "🐇 Fast"]])}
+      <label class="l">Learn to play (hints)</label>${seg("hnt", "hints", [[true, "💡 On"], [false, "Off"]])}
       <label class="l">Sound effects</label>${seg("snd", "sound", [[true, "🔊 On"], [false, "🔇 Off"]])}`;
 }
 function wireSettings(root, redraw) {
   root.querySelectorAll("#spd button").forEach((b) => (b.onclick = () => { settings.speed = b.dataset.v; saveSettings(); redraw(); }));
+  root.querySelectorAll("#hnt button").forEach((b) => (b.onclick = () => { settings.hints = b.dataset.v === "true"; saveSettings(); redraw(); if (s && $("actions")) renderHud(); }));
   root.querySelectorAll("#snd button").forEach((b) => (b.onclick = () => {
     settings.sound = b.dataset.v === "true"; setSoundEnabled(settings.sound); saveSettings(); unlockAudio(); redraw(); sfx("coin");
   }));
@@ -655,7 +670,7 @@ function startGame() {
   mainBots = {};
   if (!worker && !workerDead) initWorker();
   closeSheet(); hideOverlay();
-  $("toast").innerHTML = "";
+  $("toast").querySelectorAll(".tst:not(.keep)").forEach((t) => t.remove());
   requestAnimationFrame(() => {
     buildBoard();
     renderGoats();
