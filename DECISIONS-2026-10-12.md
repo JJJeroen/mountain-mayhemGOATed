@@ -17,3 +17,8 @@
 12. **Hay inflation: left alone** (presentation only). **Hay floor at 0: kept and documented** in RULES.md.
 13. **Docs fixed:** Headbutt wording in RULES.md matches the engine; REVIEW and HANDOFF corrected; `window.__mm` debug hook removed from web/main.js.
 14. **Web UI** updated to pledges (button "Pledge", sheet shows the current value and remaining kinds); verified by two full headless games (3 and 4 seats), no console errors.
+
+---
+# Addendum 2026-10-13 (evening): why did the AI always pledge in stage 1?
+15. **Cause (measured, 150 games):** 99% of bot pledges were in stage 1 and right only 21% of the time (chance). Two causes: (a) with -2, a blind stage-1 pledge was +EV (0.2x10 - 0.8x2 = +0.4), so pledging blind early was the *correct* play, a rules flaw; (b) the bot's 12-playout estimates are noisy and the best of ten always looks good (winner's curse).
+16. **Fix:** wrong pledge costs **3** (blind early pledge is now -0.4); bot shrinks its probability toward 1/5 and confirms a promising pledge with 48 more playouts (`nConfirm`). Result: 3% of pledges in stage 1, most in stages 3-5, 40-76% correct. Side effect: pledges flip the winner in 14% of 4-seat games (was 35%), so they matter less for the result. A blind stage-1 hedger now loses ~2 hay vs the table.

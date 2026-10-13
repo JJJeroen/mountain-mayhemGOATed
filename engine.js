@@ -13,7 +13,7 @@ export const TRICK_COPIES = { headbutt: 3, snack: 3, mudslide: 2, wobble: 3, swa
 export const DEFAULT_CONFIG = {
   finish: 20, mud: [6, 8], ram: 17, startHay: 3,
   legValues: [6, 4, 2], pledgeValues: [10, 8, 7, 6, 5, 4], hoofHay: 1,
-  startHand: 3, handMax: 4, mudHalves: true, ramCrossOnly: true, finalPenalty: 2, cheerHay: 2,
+  startHand: 3, handMax: 4, mudHalves: true, ramCrossOnly: true, finalPenalty: 3, cheerHay: 2,
 };
 
 // ---- seeded rng (state kept in o.rng so a board can be cloned and replayed) ----
