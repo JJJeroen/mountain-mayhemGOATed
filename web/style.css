@@ -4,10 +4,13 @@
   --accent:#ff6a3d; --good:#2fa75a; --bad:#d6403a;
   --font:"Fredoka","Baloo 2",ui-rounded,"Nunito",system-ui,sans-serif;
 }
+/* Capacitor 8 draws the Android app edge-to-edge and injects --safe-area-inset-* (status bar, camera cutout, gesture bar);
+   in a plain browser they fall back to env() or 0. Nothing important may sit under the clock or the camera. */
+:root{--sat:var(--safe-area-inset-top,env(safe-area-inset-top,0px));--sab:var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px));--sal:var(--safe-area-inset-left,env(safe-area-inset-left,0px));--sar:var(--safe-area-inset-right,env(safe-area-inset-right,0px))}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:#274a63;font-family:var(--font);color:var(--ink);overscroll-behavior:none}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
-#app{max-width:520px;height:100dvh;margin:0 auto;display:flex;flex-direction:column;background:linear-gradient(var(--sky1),var(--sky2) 55%,#dff3c9);position:relative;overflow:hidden;box-shadow:0 0 40px #0006}
+#app{max-width:520px;height:100dvh;padding:var(--sat) var(--sar) 0 var(--sal);margin:0 auto;display:flex;flex-direction:column;background:linear-gradient(var(--sky1),var(--sky2) 55%,#dff3c9);position:relative;overflow:hidden;box-shadow:0 0 40px #0006}
 
 /* header */
 #top{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff8ea;border-bottom:3px solid var(--ink)}
@@ -91,7 +94,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-
 @keyframes wiggle{0%,100%{transform:rotate(0)}50%{transform:rotate(1.5deg) translateY(-1px)}}
 
 /* actions */
-#actions{padding:5px 6px calc(8px + env(safe-area-inset-bottom));background:#fff8ea;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#actions{padding:5px 6px calc(8px + var(--sab));background:#fff8ea;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 #actions .hint{grid-column:1/-1;font-size:12px;text-align:center;font-weight:500;min-height:16px}
 .abtn{border:3px solid var(--ink);border-radius:14px;background:var(--bg,#ffd34a);min-height:52px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-weight:600;font-size:13px;box-shadow:0 4px 0 var(--ink);transition:transform .08s,box-shadow .08s}
 .abtn .ic{font-size:21px;line-height:1}
@@ -100,12 +103,12 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-
 .abtn.run{--bg:#7fe08a}.abtn.trick{--bg:#c9a8ff}.abtn.scout{--bg:#8fd8ff}.abtn.final{--bg:#ff9a7a}
 
 /* sheets & overlays */
-#sheet,#overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;justify-content:center;background:#0008;animation:fade .2s}
+#sheet,#overlay{position:fixed;inset:0;padding:var(--sat) var(--sar) 0 var(--sal);z-index:100;display:flex;align-items:flex-end;justify-content:center;background:#0008;animation:fade .2s}
 #overlay{align-items:center}
 #sheet[hidden],#overlay[hidden]{display:none}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-.panel{width:100%;max-width:520px;max-height:88dvh;overflow:auto;background:var(--paper);border:3px solid var(--ink);border-radius:22px 22px 0 0;padding:14px 14px calc(16px + env(safe-area-inset-bottom));animation:up .25s ease}
-#overlay .panel{border-radius:22px;width:94%;max-height:92dvh}
+.panel{width:100%;max-width:520px;max-height:calc(88dvh - var(--sat));overflow:auto;background:var(--paper);border:3px solid var(--ink);border-radius:22px 22px 0 0;padding:14px 14px calc(16px + var(--sab));animation:up .25s ease}
+#overlay .panel{border-radius:22px;width:94%;max-height:calc(92dvh - var(--sat))}
 @keyframes up{from{transform:translateY(40px)}to{transform:none}}
 .panel h2{margin:0 0 6px;font-size:21px}
 .panel h3{margin:12px 0 4px;font-size:15px}
