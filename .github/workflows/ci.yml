@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Rules tests, then check web/engine.js and web/bots.js match the top-level files.
+      - run: npm test
+      # Short balance sim as a smoke test: all 40 games must finish (no stalls).
+      - name: Balance sim smoke test
+        run: node sim.js --quick --games 40 --procs 2 --n 6 | tee sim.out && grep -q ": 40 games ===" sim.out
