@@ -18,4 +18,6 @@ jobs:
       - run: npm test
       # Short balance sim as a smoke test: all 40 games must finish (no stalls).
       - name: Balance sim smoke test
-        run: node sim.js --quick --games 40 --procs 2 --n 6 | tee sim.out && grep -q ": 40 games ===" sim.out
+        run: |
+          node sim.js --quick --games 40 --procs 2 --n 6 | tee sim.out
+          grep -q ": 40 games ===" sim.out
