@@ -17,3 +17,13 @@
 12. **Hay inflation: left alone** (presentation only). **Hay floor at 0: kept and documented** in RULES.md.
 13. **Docs fixed:** Headbutt wording in RULES.md matches the engine; REVIEW and HANDOFF corrected; `window.__mm` debug hook removed from web/main.js.
 14. **Web UI** updated to pledges (button "Pledge", sheet shows the current value and remaining kinds); verified by two full headless games (3 and 4 seats), no console errors.
+
+---
+# Addendum 2026-10-31 (round 3: AI patience, Dutch, splash, pest-card popup)
+15. **AI "gamble happy" measured, then fixed in the bots.** Old-style bots (PR #39 build, no confirmation) placed ~2.5 summit pledges per game in stage 1 and grabbed leg tokens before any goat had moved. New: pledges are shrunk toward chance, must reach `minProb` 0.5 and are re-checked with 48 extra playouts (PR #36's idea, merged with #39's `minProb`); early leg bets are discounted by `legPatience` x share of the stage still unplayed (easy 0.8, normal 0.4, hard 0.2). 2000-game seat-rotated tournaments: pledge confirmation alone beats the old bot 55% vs 40%; adding patience 0.4 gives 51% vs 43% (a deliberate small strength cost for human-like pacing; patience 1.8 loses outright).
+16. **Rule change, needs the owner's OK: wrong pledge costs 3 (was 2).** Same change as PR #36. At 2, a near-blind stage-1 pledge was +EV, so even careful bots rationally gambled early.
+17. **Merged into this branch:** PR #38 safe-area (kept the 26px minimum top gap from #39), PR #39 round-2 work. PR #36 is superseded by this branch.
+18. **Dutch (nl) added**, auto-picked from the phone language, switchable on the start screen and in settings. Strings go through `L(en, nl)` in `web/main.js`. Pest cards (tricks) are called "Pestkaart" in Dutch, pledges "Topgok", stage "Etappe", hay "hooi". Goat and avatar names stay as is.
+19. **Short themed "How to play"** in both languages on top of the help sheet; the old full rules sit under "All the rules".
+20. **Splash screen** (in-page, tap or ~3 s). The native Android splash and app icon (issue #26) are NOT done.
+21. **Pest card popup:** an opponent's trick shows as a big card (who, name, effect, target goat) for ~2 s (shorter on Fast, tap to skip) before the effect plays out.

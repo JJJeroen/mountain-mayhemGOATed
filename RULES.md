@@ -71,7 +71,7 @@ Then discard leg-bet tokens, reset the Herd deck, and the next player starts a n
 ## End of the race
 The race ends when the first goat crosses the finish line (after space 20, or 15 in the quick game). Do a last stage scoring. Then reveal every Summit pledge:
 - Correct: the hay value it carries (fixed when you made it, see action 5).
-- Wrong: **-2 hay**.
+- Wrong: **-3 hay**.
 - A Loser pledge is correct if that goat finishes last.
 
 Most hay wins. **Tiebreak:** most correct pledges; still equal = shared win.
@@ -98,4 +98,4 @@ Most hay wins. **Tiebreak:** most correct pledges; still equal = shared win.
 - **Ram detail:** is it fair that riders profit when their carrier gets heartbroken? Playtest.
 - **Name/IP:** run trademark and store searches for "Mountain Mayhem" before branding (deferred by the owner).
 - **Hay inflation:** payouts could be scaled down; held back until a playtest shows whether it matters.
-- **Pledge ladder** (10/8/7/6/5/4, wrong -2) is untuned beyond the hedging test: check whether early pledges are too attractive.
+- **Pledge ladder** (10/8/7/6/5/4, wrong -3) is untuned beyond the hedging test: check whether early pledges are too attractive.
