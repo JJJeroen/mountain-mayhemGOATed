@@ -40,6 +40,7 @@ const blurb = (g) => (settings.lang === "nl" ? GOAT_BLURB_NL[g] : GOAT_BLURB[g])
 let settings = { name: "You", avatar: 0, opponents: 3, level: "normal", speed: "normal", sound: true, length: "quick", hints: true, lang: (navigator.language || "en").toLowerCase().startsWith("nl") ? "nl" : "en" };
 const LENGTHS = { quick: { finish: 15, ram: 12, mud: [5, 7] }, long: {} }; // quick = ~100 turns, long = ~150 (see sim notes)
 try { Object.assign(settings, JSON.parse(localStorage.getItem("mm-settings") || "{}")); } catch { /* private mode */ }
+if (settings.lang !== "nl") settings.lang = "en";
 if (settings.fast) settings.speed = "fast"; // migrate the old Normal/Fast switch
 delete settings.fast;
 setSoundEnabled(settings.sound);
@@ -241,7 +242,7 @@ function renderHud() {
     const hoofs = p.hoofs ? `<span class="dot hoof">👣${p.hoofs}</span>` : "";
     const fin = s.finalBets.filter((b) => b.player === i).length;
     const finTag = fin ? `<span class="dot" style="background:#ffcfb8">🎯${fin}</span>` : "";
-    return `<div class="pl ${s.turn === i ? "active" : ""} ${i === 0 ? "you" : ""}" data-you="${L("YOU", "JIJ")}">${avatarSvg(seats[i].avatar, 34)}<div><div class="nm">${esc(seats[i].name)}</div><div class="hay">${p.hay}<small> ${L("hay", "hooi")}</small></div></div><div class="tk">${legs}${hoofs}${finTag}</div></div>`;
+    return `<div class="pl ${s.turn === i ? "active" : ""} ${i === 0 ? "you" : ""}" data-you="${L("YOU", "JIJ")}">${avatarSvg(seats[i].avatar, 34)}<div><div class="nm">${esc(i === 0 ? myName() : seats[i].name)}</div><div class="hay">${p.hay}<small> ${L("hay", "hooi")}</small></div></div><div class="tk">${legs}${hoofs}${finTag}</div></div>`;
   }).join("");
 
   // leg bets
@@ -833,8 +834,8 @@ function showSplash() {
 (function boot() {
   s = newGame({ players: 4, seed: 7 });
   seats = [0, 1, 2, 3].map((i) => ({ name: i === 0 ? myName() : AVATARS[i].name, avatar: i, human: i === 0 }));
+  showSplash(); // first, so a boot error below can never leave an undismissable cover
   applyLang();
   buildBoard(); renderGoats(); renderHud();
   showStart();
-  showSplash();
 })();

@@ -36,7 +36,7 @@ function runGames(count, seedBase) {
   const mode = args.mode || "balance";
   const PL = num("players", 4);
   const n = num("n", 16);
-  const sm = () => smartBot({ n, finalMargin: num("margin", 0.5), minProb: num("minprob", 0.5), legPatience: num("patience", 0), maxTricks: 99 });
+  const sm = () => smartBot({ n, finalMargin: num("margin", 0.5), minProb: num("minprob", 0.5), legPatience: num("patience", 0.4), maxTricks: 99 });
   const A = { games: 0, stages: 0, turns: 0, ramTriggers: 0, runs: 0, mudSlowed: 0, leadChanges: 0,
     actions: {}, tricks: {}, winGoat: {}, loseGoat: {}, seatWins: Array(num("players", 4)).fill(0), ties: 0, hayN: 0, haySum: 0,
     src: { leg: 0, hoof: 0, cheer: 0, final: 0 }, finalSwing: 0, finalSwingable: 0, winnerFirstAtMid: 0, leaderMidIsWinner: 0,
