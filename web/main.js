@@ -696,8 +696,9 @@ async function playTurnInner(myGen) {
         else await sleep(300);
         continue;
       }
-      setExpr(ev.goat, ev.ram ? "love" : "effort", ev.ram ? 2600 : 1400);
+      setExpr(ev.goat, ev.ram && !ev.deaf ? "love" : "effort", ev.ram && !ev.deaf ? 2600 : 1400); // earplugs: no hearts
       if (ev.ram && !ev.deaf) setExpr(ev.smitten, "love", 2600);
+      if (ev.ram && ev.deaf) burst(ev.smitten, "🎧");
       hop(ev.goat);
       sfx(ev.slowed ? "mud" : "land");
       sfx(ev.slowed ? "annoyed" : "baa", ev.goat, 120);
@@ -711,8 +712,8 @@ async function playTurnInner(myGen) {
       if (ev.ram) {
         $("ram").classList.remove("swoon"); void $("ram").offsetWidth; $("ram").classList.add("swoon");
         toast(ev.deaf ? `<span>🎧 ${L(`${gName(ev.smitten)} fell for the Ram, but the earplugs help: the stack stops, nobody skips a run.`, `${gName(ev.smitten)} viel voor de Ram, maar de oordoppen helpen: de stapel stopt, niemand slaat een ren over.`)}</span>` : `<span>💘 ${L(`${gName(ev.smitten)} fell for the Ram! The stack stops here and ${gShort(ev.smitten)} skips its next run.`, `${gName(ev.smitten)} werd smoorverliefd op de Ram! De stapel stopt hier en ${gShort(ev.smitten)} slaat de volgende ren over.`)}</span>`, 2300);
-        log(L(`${gName(ev.smitten)} fell for the Ram`, `${gName(ev.smitten)} werd verliefd op de Ram`));
-        burst(ev.smitten, "💕");
+        log(ev.deaf ? L(`${gName(ev.smitten)} did not hear the Ram (earplugs) but the stack stops anyway`, `${gName(ev.smitten)} hoorde de Ram niet (oordoppen), maar de stapel stopt toch`) : L(`${gName(ev.smitten)} fell for the Ram`, `${gName(ev.smitten)} werd verliefd op de Ram`));
+        if (!ev.deaf) burst(ev.smitten, "💕");
         sfx("ram");
         if (!ev.deaf) sfx("annoyed", ev.smitten, 700);
         await sleep(1500);
