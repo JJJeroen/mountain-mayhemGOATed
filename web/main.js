@@ -47,6 +47,10 @@ if (settings.lang !== "nl") settings.lang = "en";
 if (settings.fast) settings.speed = "fast"; // migrate the old Normal/Fast switch
 delete settings.fast;
 setSoundEnabled(settings.sound);
+// The running game is saved after every move so a stray back press or an app kill only costs the animation.
+const SAVE_KEY = "mm-save-v1";
+const saveGame = () => { try { if (s && !s.finished && gen > 0) localStorage.setItem(SAVE_KEY, JSON.stringify({ s, seats, level: settings.level })); else localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ } };
+const loadSave = () => { try { const o = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); return o && o.s && Array.isArray(o.s.players) && Array.isArray(o.seats) && !o.s.finished ? o : null; } catch { return null; } };
 const saveSettings = () => { try { localStorage.setItem("mm-settings", JSON.stringify(settings)); } catch { /* ignore */ } };
 // legPatience: how much an early leg bet is discounted (the bots used to grab tokens before a single goat had moved).
 const LEVELS = {
@@ -60,6 +64,7 @@ let s = null; // engine state
 let seats = []; // [{name, avatar, human}]
 let gen = 0; // bumped on new game so stale loops stop
 let humanResolve = null;
+let hudActor = null; // while an opponent's move is being shown, the HUD still names that opponent (not the next player)
 const expr = {}; // goat -> {e, until}
 const logLines = [];
 
@@ -255,7 +260,7 @@ function renderHud() {
     const hoofs = p.hoofs ? `<span class="dot hoof">👣${p.hoofs}</span>` : "";
     const fin = s.finalBets.filter((b) => b.player === i).length;
     const finTag = fin ? `<span class="dot" style="background:#ffcfb8">🎯${fin}</span>` : "";
-    return `<div class="pl ${s.turn === i ? "active" : ""} ${i === 0 ? "you" : ""}" data-you="${L("YOU", "JIJ")}">${avatarSvg(seats[i].avatar, 34)}<div><div class="nm">${esc(i === 0 ? myName() : seats[i].name)}</div><div class="hay">${p.hay}<small> ${L("hay", "hooi")}</small></div></div><div class="tk">${legs}${hoofs}${finTag}</div></div>`;
+    return `<div class="pl ${(hudActor ?? s.turn) === i ? "active" : ""} ${i === 0 ? "you" : ""}" data-you="${L("YOU", "JIJ")}">${avatarSvg(seats[i].avatar, 34)}<div><div class="nm">${esc(i === 0 ? myName() : seats[i].name)}</div><div class="hay">${p.hay}<small> ${L("hay", "hooi")}</small></div></div><div class="tk">${legs}${hoofs}${finTag}</div></div>`;
   }).join("");
 
   // leg bets
@@ -278,10 +283,10 @@ function renderHud() {
   const canScout = legal.some((a) => a.type === "scout");
   const canFinal = legal.some((a) => a.type === "final");
   $("actions").innerHTML = `
-    <div class="hint ${settings.hints && myTurn ? "coach" : ""}">${s.finished ? "" : myTurn ? (settings.hints ? coachText(me) : L("Your turn: tap a goat above to bet, or choose an action", "Jouw beurt: tik op een geit om te gokken, of kies een actie")) : `<span class="turnb">${avatarSvg(seats[s.turn].avatar, 24)}<b>${esc(seats[s.turn].name)}</b> ${L("is thinking…", "denkt na…")}</span>`}</div>
+    <div class="hint ${settings.hints && myTurn ? "coach" : ""}">${s.finished ? "" : myTurn ? (settings.hints ? coachText(me) : L("Your turn: tap a goat above to bet, or choose an action", "Jouw beurt: tik op een geit om te gokken, of kies een actie")) : `<span class="turnb">${avatarSvg(seats[s.turn].avatar, 24)}<b>${esc(seats[hudActor ?? s.turn].name)}</b> ${L(hudActor === null ? "is thinking…" : "just played", hudActor === null ? "denkt na…" : "was net aan de beurt")}</span>`}</div>
     <button class="abtn run" id="aRun" ${myTurn ? "" : "disabled"}><span class="ic">🏃</span>${L("Run", "Ren")}${sub(L("roll the next goat", "gooi voor de volgende geit"))}</button>
     <button class="abtn trick" id="aTrick" ${canTrick ? "" : "disabled"}><span class="ic">🃏</span>${L("Trick", "Pestkaart")} (${me.hand.length})${sub(L("play a card", "speel een kaart"))}</button>
-    <button class="abtn scout" id="aScout" ${canScout ? "" : "disabled"}><span class="ic">👀</span>${L("Scout", "Gluren")}${sub(L("free peek, then act again", "gratis gluren, daarna nog een actie"))}</button>
+    <button class="abtn scout" id="aScout" ${canScout ? "" : "disabled"}><span class="ic">👀</span>${L("Scout", "Gluren")}${sub(L("free, then act", "gratis, dan nog iets"))}</button>
     <button class="abtn final" id="aFinal" ${canFinal ? "" : "disabled"}><span class="ic">🎯</span>${L("Pledge", "Topgok")} (${me.finalsLeft.length})${sub(L("bet on the winner", "gok op de winnaar"))}</button>`;
   $("aRun").onclick = () => submit({ type: "run" });
   $("aScout").onclick = () => submit({ type: "scout" });
@@ -581,7 +586,9 @@ async function showFinal(preFinal) {
     <div class="row" style="justify-content:center"><button class="btn go" id="again">${L("Play again", "Nog een keer")}</button><button class="btn alt" id="menu">${L("Menu", "Menu")}</button></div>`;
   if (winners.some((w) => w.i === 0)) confetti();
   o.querySelector("#st").scrollIntoView({ behavior: "smooth", block: "end" });
-  o.querySelector("#again").onclick = () => { hideOverlay(); startGame(); };
+  o.querySelector("#again").onclick = () => { hideOverlay(); try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ } startGame(); };
+    const rs = o.querySelector("#resume");
+    if (rs) rs.onclick = () => { unlockAudio(); startGame(saved); };
   o.querySelector("#menu").onclick = () => { hideOverlay(); showStart(); };
 }
 
@@ -618,6 +625,9 @@ function actionIcon(a) {
 }
 
 async function playTurn(myGen) {
+  try { return await playTurnInner(myGen); } finally { hudActor = null; }
+}
+async function playTurnInner(myGen) {
   const pi = s.turn;
   let act;
   renderHud();
@@ -635,12 +645,14 @@ async function playTurn(myGen) {
   const leaderBefore = ranking(s)[0];
   const stageBefore = s.stage;
   const events = apply(s, act);
+  saveGame();
+  hudActor = seats[pi].human ? null : pi;
   const head = events[0];
   const text = describe(head, pi);
   log(text);
   // A bot's free peek is silent: the hidden card is nobody else's business and it is straight back to the same player.
   if (act.type === "scout" && !seats[pi].human) return true;
-  toast(`${avatarSvg(seats[pi].avatar, 28)}<span>${esc(text)} ${actionIcon(act)}</span>`, 2200);
+  if (seats[pi].human || act.type !== "trick") toast(`${avatarSvg(seats[pi].avatar, 28)}<span>${esc(text)} ${actionIcon(act)}</span>`, 2200); // an opponent's pest card gets the big card instead
   if (settings.hints && seats[pi].human && (act.type === "scout" || (act.type === "trick" && act.card === "whistle" && !act.args.bury))) {
     toast(`<span>${L(`👀 You peeked: <b>${gName(s.players[pi].knownTop)}</b> runs next. Only you know, shown as the glowing card in the top bar. Bet on it, or Run to move it.`, `👀 Je gluurde: <b>${gName(s.players[pi].knownTop)}</b> rent als volgende. Alleen jij weet het, zie de gloeiende kaart bovenin. Gok erop, of Ren om hem te verplaatsen.`)}</span>`, 6000, true);
   }
@@ -704,7 +716,7 @@ async function playTurn(myGen) {
     if (myGen !== gen) return false;
     await showStageScore(before, hayAfterStage, stageRank);
     if (myGen !== gen) return false;
-    if (ended) { await showFinal(s.stats.preFinal); return false; }
+    if (ended) { saveGame(); await showFinal(s.stats.preFinal); return false; }
     renderGoats(); renderHud();
     toast(`<span>🌄 ${L(`Stage ${s.stage} begins. New Herd deck shuffled!`, `Etappe ${s.stage} begint. Nieuwe kudde-stapel geschud!`)}</span>`, 1800);
   }
@@ -785,13 +797,15 @@ function openSettings() {
   draw();
 }
 
-function startGame() {
+function startGame(saved) {
   gen++;
   const myGen = gen;
-  const n = settings.opponents + 1;
-  s = newGame({ players: n, seed: (Math.random() * 2 ** 31) | 0, cfg: LENGTHS[settings.length] || {} });
-  const opp = pickOpponents(n - 1, settings.avatar);
-  seats = [{ name: myName(), avatar: settings.avatar, human: true }, ...opp.map((a) => ({ name: AVATARS[a].name, avatar: a, human: false }))];
+  if (saved) { s = saved.s; seats = saved.seats; seats[0].name = myName(); } else {
+    const n = settings.opponents + 1;
+    s = newGame({ players: n, seed: (Math.random() * 2 ** 31) | 0, cfg: LENGTHS[settings.length] || {} });
+    const opp = pickOpponents(n - 1, settings.avatar);
+    seats = [{ name: myName(), avatar: settings.avatar, human: true }, ...opp.map((a) => ({ name: AVATARS[a].name, avatar: a, human: false }))];
+  }
   logLines.length = 0;
   for (const g of GOAT_IDS) delete expr[g];
   humanResolve = null;
@@ -803,7 +817,7 @@ function startGame() {
     buildBoard();
     renderGoats();
     renderHud();
-    toast(`<span>🏁 ${L("The goats are off! You start the race.", "De geiten zijn los! Jij begint de race.")}</span>`, 2000);
+    toast(`<span>🏁 ${saved ? L("Welcome back! Your game goes on.", "Welkom terug! Je spel gaat verder.") : L(`The goats are off! ${seats[s.turn].human ? "You start" : esc(seats[s.turn].name) + " starts"} the race.`, `De geiten zijn los! ${seats[s.turn].human ? "Jij begint" : esc(seats[s.turn].name) + " begint"} de race.`)}</span>`, 2000);
     gameLoop(myGen);
   });
 }
@@ -811,6 +825,7 @@ function startGame() {
 function showStart() {
   gen++; // stop any running game
   humanResolve = null;
+  const saved = loadSave();
   const draw = () => {
     const o = showOverlay(`<div class="panel hero"><div class="herd">${GOAT_IDS.map((g, i) => goatSvg(g, ["love", "effort", "neutral", "dizzy", "neutral"][i], { size: 90 })).join("")}</div>
       ${langRow()}
@@ -824,7 +839,7 @@ function showStart() {
       <label class="l">${L("AI level", "AI-niveau")}</label><div class="seg" id="lvl">${[["easy", L("easy", "makkelijk")], ["normal", L("normal", "normaal")], ["hard", L("hard", "moeilijk")]].map(([l, nm]) => `<button data-l="${l}" class="${settings.level === l ? "on" : ""}">${nm}</button>`).join("")}</div>
       ${settingsRows(false)}
       </div>
-      <div class="row" style="justify-content:center;margin-top:14px"><button class="btn go big" id="play">${L("Play!", "Spelen!")}</button><button class="btn alt" id="how">${L("How to play", "Uitleg")}</button></div></div>`);
+      <div class="row" style="justify-content:center;margin-top:14px"><button class="btn go big" id="play">${L("Play!", "Spelen!")}</button><button class="btn alt" id="how">${L("How to play", "Uitleg")}</button></div>${saved ? `<div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="resume">${L("▶ Continue last game", "▶ Verder met vorig spel")}</button></div>` : ""}</div>`);
     o.querySelector("#nm").oninput = (e) => { settings.name = e.target.value; saveSettings(); };
     o.querySelectorAll(".avb").forEach((b) => (b.onclick = () => { settings.avatar = +b.dataset.a; saveSettings(); const v = o.querySelector("#nm").value; draw(); o.querySelector("#nm").value = v; }));
     o.querySelectorAll("#opp button").forEach((b) => (b.onclick = () => { settings.opponents = +b.dataset.n; saveSettings(); draw(); }));
