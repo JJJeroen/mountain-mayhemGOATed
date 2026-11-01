@@ -26,7 +26,7 @@ const TRICKS = {
   mudslide: trick("🛝", ["Mud Slide", "Modderglijbaan"], ["A goat that hasn't run this stage has its run halved.", "Een geit die deze etappe nog niet gerend heeft, rent maar half zo ver."]),
   wobble: trick("🫨", ["Wobble", "Wankelen"], ["The top goat of a stack falls one space back.", "De bovenste geit van een stapel valt één vakje terug."]),
   swap: trick("🔀", ["Swap Places", "Plekwissel"], ["Two goats that stand alone trade spaces.", "Twee geiten die alleen staan, ruilen van vakje."]),
-  earplugs: trick("🎧", ["Earplugs", "Oordoppen"], ["This goat does not skip a run if the Ram stops its stack.", "De bovenste geit van de stapel slaat bij de Ram geen ren over."]),
+  earplugs: trick("🎧", ["Earplugs", "Oordoppen"], ["This goat does not skip a run if the Ram stops its stack.", "Deze geit slaat geen ren over als de Ram zijn stapel tegenhoudt."]),
   whistle: trick("📯", ["Whistle", "Fluitje"], ["Peek at the next Herd card, then keep it on top or bury it.", "Gluur naar de volgende kudde-kaart en laat hem bovenop of stop hem onderaan."]),
   cheer: trick("📣", ["Cheer", "Aanmoedigen"], ["Back the current leader: +2 hay at stage end if it still leads.", "Steun de koploper: +2 hooi aan het eind van de etappe als hij nog voorop ligt."]),
 };
@@ -50,8 +50,8 @@ setSoundEnabled(settings.sound);
 const saveSettings = () => { try { localStorage.setItem("mm-settings", JSON.stringify(settings)); } catch { /* ignore */ } };
 // legPatience: how much an early leg bet is discounted (the bots used to grab tokens before a single goat had moved).
 const LEVELS = {
-  easy: { n: 8, nFinal: 8, eps: 0.3, legPatience: 0.8 },
-  normal: { n: 16, nFinal: 12, eps: 0.06, legPatience: 0.4 },
+  easy: { n: 8, nFinal: 8, eps: 0.3, legPatience: 0.8, scoutChance: 0.4 },
+  normal: { n: 16, nFinal: 12, eps: 0.06, legPatience: 0.4, scoutChance: 0.85 },
   hard: { n: 36, nFinal: 20, eps: 0, legPatience: 0.2 },
 };
 
@@ -396,15 +396,15 @@ function openLog() {
 }
 
 function openHelp() {
-  const c = s ? s.cfg : DEFAULT_CONFIG;
+  const c = gen > 0 && s ? s.cfg : { ...DEFAULT_CONFIG, ...(LENGTHS[settings.length] || {}) }; // before a game starts, show the selected track
   const quick = L(`
   <div class="quick">
    <h2>🐐 How to play</h2>
    <p class="lead">Five goats climb the mountain. <b>None of them is yours</b>: you bet on all of them. Whoever collects the most <b>hay</b> 🌾 wins.</p>
    <ol class="steps">
-    <li><b>🪙 Bet:</b> grab a hay token on the goat you think leads when the stage ends. Right: 6, 4 or 2 hay. Wrong: ouch.</li>
-    <li><b>🏃 Run:</b> flip a Herd card and that goat rolls its own dice. Goats that land on each other <b>stack up</b> and the bottom goat does the carrying. Mud halves your pace, and the lovesick <b>Ram</b> stops the first goat that reaches him: it stays put and skips its next run.</li>
-    <li><b>🃏 Pest card:</b> play a nasty little trick: shove, swap, snack or slow a goat down. Everybody sees it.</li>
+    <li><b>🪙 Bet:</b> grab a hay token on the goat you think leads when the stage ends. Right: 6, 4 or 2 hay (2nd place +1). Wrong: −1.</li>
+    <li><b>🏃 Run:</b> flip a Herd card and that goat rolls its own dice. Goats that land on each other <b>stack up</b> and the bottom goat does the carrying. Mud halves your pace, and the lovesick <b>Ram</b> stops the first goat that reaches him, together with its whole stack: only the goat on top skips its next run.</li>
+    <li><b>🃏 Pest card:</b> play a nasty little trick: shove, swap, snack or slow a goat down, and more. Everybody sees it.</li>
     <li><b>🎯 Summit pledge:</b> once per game, secretly bet on who wins (and who comes last). The earlier you dare, the more hay it pays.</li>
    </ol>
    <p>One action per turn. When all five goats have run, the stage is scored. First goat over the line ends the race!</p>
@@ -413,9 +413,9 @@ function openHelp() {
    <h2>🐐 Zo speel je het</h2>
    <p class="lead">Vijf geiten klimmen de berg op. <b>Geen enkele is van jou</b>: je moet gokken op wie de etappe wint en op degene die de wedstrijd wint. Wie het meeste <b>hooi</b> 🌾 verzamelt, wint.</p>
    <ol class="steps">
-    <li><b>🪙 Etappe gokken:</b> pak een hooitoken op de geit waarvan jij denkt dat hij aan het eind van de etappe voorop ligt. Goed: 6, 4 of 2 hooi. Fout betekent hooi inleveren.</li>
-    <li><b>🏃 Rennen:</b> draai een kudde-kaart om en die geit gooit zijn eigen dobbelsteen. Geiten die op elkaar landen <b>stapelen</b> zich op en de onderste geit draagt de rest. Modder halveert je tempo, en de smoorverliefde <b>Ram</b> houdt de eerste geit die hem bereikt tegen: die blijft staan en loopt de volgende beurt niet.</li>
-    <li><b>🃏 Pestkaart:</b> Er zijn 4 varianten: duwen, wisselen, extra hard rennen of een geit afremmen. </li>
+    <li><b>🪙 Etappe gokken:</b> pak een hooitoken op de geit waarvan jij denkt dat hij aan het eind van de etappe voorop ligt. Goed: 6, 4 of 2 hooi (2e plek +1). Fout: −1.</li>
+    <li><b>🏃 Rennen:</b> draai een kudde-kaart om en die geit gooit zijn eigen dobbelsteen. Geiten die op elkaar landen <b>stapelen</b> zich op en de onderste geit draagt de rest. Modder halveert je tempo, en de smoorverliefde <b>Ram</b> houdt de eerste geit die hem bereikt tegen, samen met zijn hele stapel: alleen de bovenste geit slaat zijn volgende ren over.</li>
+    <li><b>🃏 Pestkaart:</b> Er zijn 8 soorten, zoals duwen, wisselen, extra hard rennen of een geit afremmen. </li>
     <li><b>🎯 Topgokken:</b> één keer per spel gok je in het geheim wie wint (en wie laatste wordt). Hoe eerder je durft, hoe meer hooi het oplevert als je het goed hebt.</li>
    </ol>
    <p>Eén actie per beurt. Als alle vijf geiten gerend hebben, is de etappe klaar en worden de punten geteld. Loopt een geit tijdens het spel over de finish? Dan is de race meteen ten einde!</p>
@@ -452,6 +452,7 @@ function openHelp() {
   const end = L("The race ends when a goat crosses the finish line. Then the pledges are revealed.", "De race eindigt als een geit over de finishlijn gaat. Dan worden de topgokken onthuld.");
   openSheet(`<div class="rules">${quick}
   <details class="full"><summary>${L("📖 All the rules", "📖 Alle regels")}</summary>${full}
+  <h3>${L("Pest cards", "Pestkaarten")}</h3><ul>${Object.values(TRICKS).map((t) => `<li>${t.e} <b>${t.name}</b>: ${t.d}</li>`).join("")}</ul>
   <div class="tlist">${GOAT_IDS.map((g) => `<div class="tl"><span>${goatSvg(g, "neutral", { size: 34 })}</span><span><b>${gName(g)}</b>: ${GOATS[g].die.join(" ")}<br><small>${blurb(g)}</small></span></div>`).join("")}</div>
   <p>${end}</p></details></div>
   <div class="center"><button class="btn go" id="hOk">${L("Got it", "Begrepen")}</button></div>`);
@@ -839,8 +840,12 @@ function showStart() {
 $("btnSet").onclick = openSettings;
 $("btnHelp").onclick = openHelp;
 $("btnLog").onclick = openLog;
+// Rebuild the board whenever its box really changes size (the footer text above changes height as turns go by,
+// which used to leave the bottom row clipped until the window was resized).
 let rz;
-window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (s) { buildBoard(); for (const g of GOAT_IDS) goatEls[g].dataset.key = ""; renderGoats(); } }, 150); });
+const refit = () => { if (s && (Math.abs($("board").clientWidth - geo.w) > 1 || Math.abs($("board").clientHeight - geo.h) > 1)) { buildBoard(); for (const g of GOAT_IDS) goatEls[g].dataset.key = ""; renderGoats(); } };
+window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(refit, 100); });
+if (window.ResizeObserver) new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(refit, 60); }).observe($("board"));
 
 // ---------------------------------------------------------------- splash
 function showSplash() {

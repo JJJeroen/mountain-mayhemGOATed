@@ -62,7 +62,11 @@ export function smartBot({ n = 24, nFinal = 16, nConfirm = 48, finalMargin = 0.5
   const fn = (s, p) => {
     const legal = legalActions(s, p);
     fn.info = null;
-    if (eps && rngNext(o) < eps) return legal[randInt(o, legal.length)];
+    if (eps && rngNext(o) < eps) {
+      // A human-like slip is a poor everyday move (a wrong bet, a pointless card), never a blind summit pledge.
+      const slips = legal.filter((x) => x.type !== "final" && x.type !== "scout");
+      return slips[randInt(o, slips.length)];
+    }
     const me = s.players[p];
     // Peeking is a free action (you stay on turn), so a sensible bot always peeks first when it can.
     // scoutChance < 1 makes weaker levels forget to do it.
