@@ -22,8 +22,8 @@ const ord = (n) => L(["1st", "2nd", "3rd", "4th", "5th"], ["1e", "2e", "3e", "4e
 const trick = (e, name, d) => ({ e, get name() { return L(...name); }, get d() { return L(...d); } });
 const TRICKS = {
   headbutt: trick("🐐💥", ["Headbutt", "Kopstoot"], ["A goat riding on another swaps places with the goat beneath it.", "Een geit die op een andere zit, wisselt van plek met de geit eronder."]),
-  snack: trick("🥕", ["Snack", "Hapje"], ["A goat that hasn't run this stage gets +1 to its run.", "Een geit die deze etappe nog niet rende, krijgt +1 erbij."]),
-  mudslide: trick("🛝", ["Mud Slide", "Modderglijbaan"], ["A goat that hasn't run this stage has its run halved.", "Een geit die deze etappe nog niet rende, rent maar half zo ver."]),
+  snack: trick("🥕", ["Snack", "Hapje"], ["A goat that hasn't run this stage gets +1 to its run.", "Een geit die deze etappe nog niet gerend heeft, krijgt +1 erbij."]),
+  mudslide: trick("🛝", ["Mud Slide", "Modderglijbaan"], ["A goat that hasn't run this stage has its run halved.", "Een geit die deze etappe nog niet gerend heeft, rent maar half zo ver."]),
   wobble: trick("🫨", ["Wobble", "Wankelen"], ["The top goat of a stack falls one space back.", "De bovenste geit van een stapel valt één vakje terug."]),
   swap: trick("🔀", ["Swap Places", "Plekwissel"], ["Two goats that stand alone trade spaces.", "Twee geiten die alleen staan, ruilen van vakje."]),
   earplugs: trick("🎧", ["Earplugs", "Oordoppen"], ["A goat ignores the Ram this stage.", "Een geit trekt zich deze etappe niets aan van de Ram."]),
@@ -411,14 +411,14 @@ function openHelp() {
   </div>`, `
   <div class="quick">
    <h2>🐐 Zo speel je het</h2>
-   <p class="lead">Vijf geiten klimmen de berg op. <b>Geen enkele is van jou</b>: je gokt op ze allemaal. Wie het meeste <b>hooi</b> 🌾 verzamelt, wint.</p>
+   <p class="lead">Vijf geiten klimmen de berg op. <b>Geen enkele is van jou</b>: je moet gokken op wie de etappe wint en op degene die de wedstrijd wint. Wie het meeste <b>hooi</b> 🌾 verzamelt, wint.</p>
    <ol class="steps">
-    <li><b>🪙 Gokken:</b> pak een hooitoken op de geit waarvan jij denkt dat hij aan het eind van de etappe voorop ligt. Goed: 6, 4 of 2 hooi. Fout: au.</li>
-    <li><b>🏃 Rennen:</b> draai een kudde-kaart om en die geit gooit zijn eigen dobbelsteen. Geiten die op elkaar landen <b>stapelen</b> zich op en de onderste geit draagt de rest. Modder halveert je tempo, en de smoorverliefde <b>Ram</b> houdt de eerste geit die hem bereikt tegen: die blijft staan en slaat zijn volgende ren over.</li>
-    <li><b>🃏 Pestkaart:</b> speel een gemeen trucje: duwen, wisselen, snackkie of een geit afremmen. Iedereen ziet het.</li>
-    <li><b>🎯 Topgok:</b> één keer per spel gok je in het geheim wie wint (en wie laatste wordt). Hoe eerder je durft, hoe meer hooi het oplevert.</li>
+    <li><b>🪙 Etappe gokken:</b> pak een hooitoken op de geit waarvan jij denkt dat hij aan het eind van de etappe voorop ligt. Goed: 6, 4 of 2 hooi. Fout betekent hooi inleveren.</li>
+    <li><b>🏃 Rennen:</b> draai een kudde-kaart om en die geit gooit zijn eigen dobbelsteen. Geiten die op elkaar landen <b>stapelen</b> zich op en de onderste geit draagt de rest. Modder halveert je tempo, en de smoorverliefde <b>Ram</b> houdt de eerste geit die hem bereikt tegen: die blijft staan en loopt de volgende beurt niet.</li>
+    <li><b>🃏 Pestkaart:</b> Er zijn 4 varianten: duwen, wisselen, extra hard rennen of een geit afremmen. </li>
+    <li><b>🎯 Topgokken:</b> één keer per spel gok je in het geheim wie wint (en wie laatste wordt). Hoe eerder je durft, hoe meer hooi het oplevert als je het goed hebt.</li>
    </ol>
-   <p>Eén actie per beurt. Als alle vijf geiten gerend hebben, wordt de etappe geteld. De eerste geit over de streep beëindigt de race!</p>
+   <p>Eén actie per beurt. Als alle vijf geiten gerend hebben, is de etappe klaar en worden de punten geteld. Loopt een geit tijdens het spel over de finish? Dan is de race meteen ten einde!</p>
   </div>`);
   const full = L(`
   <h3>The path</h3>
