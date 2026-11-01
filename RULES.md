@@ -19,11 +19,11 @@ Each goat has its own six-sided die. Averages are about equal; the spread differ
 
 | Goat | Die faces | Trait |
 |---|---|---|
-| Blue "Mudlark" | 1 2 2 2 2 3 | Ignores mud |
-| Yellow "Sprinter" | 1 1 1 3 3 3 | Boom or bust |
-| Green "Steady" | 2 2 2 2 1 3 | Very predictable |
-| Orange "Leaper" | 0 1 2 2 3 4 | Wild swings |
-| White "Diva" | 1 1 2 2 3 3 | Average (placeholder for a special trait) |
+| Blue "Vincent van Goat" | 1 2 2 2 2 3 | Ignores mud |
+| Yellow "Goatzilla" | 1 1 1 3 3 3 | Boom or bust |
+| Green "Nanny McBleat" | 2 2 2 2 1 3 | Very predictable |
+| Red "ChewBAAAcca" (id `orange`) | 0 1 2 2 3 4 | Wild swings |
+| White "Goaty Perry" | 1 1 2 2 3 3 | Average (placeholder for a special trait) |
 
 ## Setup
 Shuffle the five goats' dice rolls for the start: each goat rolls its die once and starts on that space (0 is treated as 1). Goats on the same space form a stack, in random order. Each player starts with **3 hay**, one **Winner pledge** and one **Loser pledge** and **3 trick cards** drawn from the Trick deck. At the start of every later stage each player draws 1 trick card (hand limit 4, discard down).
@@ -57,7 +57,7 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 - Ranking: furthest space leads; within a stack, the goat on top leads.
 
 ## The Ram (once per race)
-Only the first goat of the whole race to **cross** space 17 (start below it, end on or past it) falls madly in love with the Ram. The goat that moved (the bottom goat of a moving stack) is immediately moved to the **last-place space and placed underneath** whichever goat currently ranks last. Its riders stay where they landed. After that the Ram is spent: every later goat walks straight past.
+The first goat of the whole race to **reach or pass** space 17 (start below it) falls head over hooves in love with the Ram and **stops on the Ram's space**; so does the whole stack it carries. The **top goat** of that stack is so dreamy that it **skips its next run** (its Herd card is still played, it just doesn't move): that is the date. Goats below it are not affected and carry it along if they move. After the date the Ram wanders off and every later goat walks straight past. Earplugs make a goat ignore the Ram.
 
 ## End of a stage: scoring
 Based on the current ranking:

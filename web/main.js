@@ -6,11 +6,14 @@ import { sfx, setSoundEnabled, unlockAudio } from "./sound.js";
 import { goatSvg, ramSvg, avatarSvg, AVATARS, GOAT_BLURB } from "./art.js";
 
 const $ = (id) => document.getElementById(id);
-const COL = { blue: "#4f95e8", yellow: "#f7c52b", green: "#58b868", orange: "#f5882d", white: "#f8f4ee" };
+const COL = { blue: "#4f95e8", yellow: "#f7c52b", green: "#58b868", orange: "#e8412c", white: "#f8f4ee" };
 const SPEEDS = { slow: 1.8, normal: 1, fast: 0.45 };
 const mult = () => SPEEDS[settings.speed] ?? 1;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms * mult()));
-const gName = (g) => GOATS[g].name;
+// Goat names always carry their colour ("Goatzilla (yellow)"); orange goat is drawn red. gShort = name only (board tags).
+const COLNAME = { blue: ["blue", "blauw"], yellow: ["yellow", "geel"], green: ["green", "groen"], orange: ["red", "rood"], white: ["white", "wit"] };
+const gShort = (g) => GOATS[g].name;
+const gName = (g) => `${GOATS[g].name} (${L(...COLNAME[g])})`;
 // Language: L(english, dutch). Everything the player reads goes through it.
 const L = (en, nl) => (settings.lang === "nl" ? nl : en);
 const ord = (n) => L(["1st", "2nd", "3rd", "4th", "5th"], ["1e", "2e", "3e", "4e", "5e"])[n] || (n + 1) + L("th", "e");
@@ -28,11 +31,11 @@ const TRICKS = {
   cheer: trick("📣", ["Cheer", "Aanmoedigen"], ["Back the current leader: +2 hay at stage end if it still leads.", "Steun de koploper: +2 hooi aan het eind van de etappe als hij nog voorop ligt."]),
 };
 const GOAT_BLURB_NL = {
-  blue: "Mudlark: modder? Welke modder. Draagt laarzen.",
-  yellow: "Sprinter: vol gas, geen remmen, vooruitstekende tanden.",
-  green: "Steady: leest de krant, haast zich nooit.",
-  orange: "Leaper: veren onder de hoeven, hoofd op vakantie.",
-  white: "Diva: zonnebril binnen, buiten, altijd.",
+  blue: "Vincent van Goat: modder? Welke modder. Draagt laarzen.",
+  yellow: "Goatzilla: vol gas, geen remmen, vooruitstekende tanden.",
+  green: "Nanny McBleat: leest de krant, haast zich nooit.",
+  orange: "ChewBAAAcca: veren onder de hoeven, hoofd op vakantie.",
+  white: "Goaty Perry: zonnebril binnen, buiten, altijd.",
 };
 const blurb = (g) => (settings.lang === "nl" ? GOAT_BLURB_NL[g] : GOAT_BLURB[g]).split(": ")[1];
 
@@ -117,6 +120,15 @@ function skyHtml(w, h) {
   </svg>`;
 }
 
+/** The Ram waits for the first goat; once that goat has had its "date" (served its skipped run) he wanders off. */
+const ramPresent = () => !s.ramUsed || Object.values(s.skips || {}).some(Boolean);
+function ramLeaves() {
+  const r = $("ram");
+  if (!r || r.classList.contains("ramgone")) return;
+  r.classList.add("ramleave");
+  setTimeout(() => r.classList.add("ramgone"), 1600);
+}
+
 function buildBoard() {
   const b = $("board");
   const w = b.clientWidth, h = b.clientHeight;
@@ -140,7 +152,7 @@ function buildBoard() {
   // ram + finish
   const rc = cellPos(s.cfg.ram);
   const rw = Math.min(geo.colW * 1.35, 120), rh = (rw * 170) / 208;
-  html += `<div class="ramspot" id="ram" style="left:${rc.x + geo.colW / 2 - rw / 2 + (rc.rev ? -rw * 0.28 : rw * 0.28)}px;top:${rc.y - rh + geo.rowH * 0.62}px;width:${rw}px;${rc.rev ? "" : "transform:scaleX(-1)"}">${ramSvg(rw)}</div>`;
+  html += `<div class="ramspot ${ramPresent() ? "" : "ramgone"}" id="ram" style="--dir:${rc.col >= 2 ? 1 : -1};left:${rc.x + geo.colW / 2 - rw / 2 + (rc.rev ? -rw * 0.28 : rw * 0.28)}px;top:${rc.y - rh + geo.rowH * 0.62}px;width:${rw}px;${rc.rev ? "" : "transform:scaleX(-1)"}">${ramSvg(rw)}</div>`;
   const lastRev = (rows - 1) % 2 === 1;
   html += `<div class="finish" style="left:${(lastRev ? 0 : 4) * geo.colW + 4}px;top:${geo.topPad - 36}px;width:${geo.colW - 8}px"><div class="flag"></div>${L("FINISH", "FINISH")}</div>`;
   b.innerHTML = html;
@@ -149,7 +161,7 @@ function buildBoard() {
     el.className = "goat";
     el.dataset.g = g;
     el.style.width = geo.gw + "px";
-    el.innerHTML = `<div class="in"><div class="flip"></div></div><span class="tag">${gName(g)}</span>`;
+    el.innerHTML = `<div class="in"><div class="flip"></div></div><span class="tag">${gShort(g)}</span>`;
     el.onclick = () => { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1600); };
     b.appendChild(el);
     goatEls[g] = el;
@@ -187,6 +199,7 @@ function renderGoats() {
     el.style.transform = `translate(${p.x}px,${p.y}px)`;
     el.style.zIndex = p.z;
     el.classList.toggle("lead", rank[0] === g);
+    el.querySelector(".tag").textContent = gShort(g) + (s.skips?.[g] ? " 💕💤" : "");
   }
 }
 
@@ -390,7 +403,7 @@ function openHelp() {
    <p class="lead">Five goats climb the mountain. <b>None of them is yours</b>: you bet on all of them. Whoever collects the most <b>hay</b> 🌾 wins.</p>
    <ol class="steps">
     <li><b>🪙 Bet:</b> grab a hay token on the goat you think leads when the stage ends. Right: 6, 4 or 2 hay. Wrong: ouch.</li>
-    <li><b>🏃 Run:</b> flip a Herd card and that goat rolls its own dice. Goats that land on each other <b>stack up</b> and the bottom goat does the carrying. Mud halves your pace, and the lovesick <b>Ram</b> sends one unlucky goat to the back.</li>
+    <li><b>🏃 Run:</b> flip a Herd card and that goat rolls its own dice. Goats that land on each other <b>stack up</b> and the bottom goat does the carrying. Mud halves your pace, and the lovesick <b>Ram</b> stops the first goat that reaches him: it stays put and skips its next run.</li>
     <li><b>🃏 Pest card:</b> play a nasty little trick: shove, swap, snack or slow a goat down. Everybody sees it.</li>
     <li><b>🎯 Summit pledge:</b> once per game, secretly bet on who wins (and who comes last). The earlier you dare, the more hay it pays.</li>
    </ol>
@@ -401,7 +414,7 @@ function openHelp() {
    <p class="lead">Vijf geiten klimmen de berg op. <b>Geen enkele is van jou</b>: je gokt op ze allemaal. Wie het meeste <b>hooi</b> 🌾 verzamelt, wint.</p>
    <ol class="steps">
     <li><b>🪙 Gokken:</b> pak een hooitoken op de geit waarvan jij denkt dat hij aan het eind van de etappe voorop ligt. Goed: 6, 4 of 2 hooi. Fout: au.</li>
-    <li><b>🏃 Rennen:</b> draai een kudde-kaart om en die geit gooit zijn eigen dobbelsteen. Geiten die op elkaar landen <b>stapelen</b> zich op en de onderste geit draagt de rest. Modder halveert je tempo, en de smoorverliefde <b>Ram</b> stuurt één pechvogel naar achteren.</li>
+    <li><b>🏃 Rennen:</b> draai een kudde-kaart om en die geit gooit zijn eigen dobbelsteen. Geiten die op elkaar landen <b>stapelen</b> zich op en de onderste geit draagt de rest. Modder halveert je tempo, en de smoorverliefde <b>Ram</b> houdt de eerste geit die hem bereikt tegen: die blijft staan en slaat zijn volgende ren over.</li>
     <li><b>🃏 Pestkaart:</b> speel een gemeen trucje: duwen, wisselen, snackkie of een geit afremmen. Iedereen ziet het.</li>
     <li><b>🎯 Topgok:</b> één keer per spel gok je in het geheim wie wint (en wie laatste wordt). Hoe eerder je durft, hoe meer hooi het oplevert.</li>
    </ol>
@@ -410,8 +423,8 @@ function openHelp() {
   const full = L(`
   <h3>The path</h3>
   <ul><li>${c.finish} spaces then the finish. A goat that ends on a crowded space <b>climbs on top</b>; a goat carries everyone on its back.</li>
-  <li><b>Mud</b> (spaces ${c.mud[0]}-${c.mud[1]}): a goat starting its move there goes half as far. Mudlark doesn't care.</li>
-  <li><b>The Ram</b> (space ${c.ram}): only the first goat of the whole race to <i>cross</i> it falls in love and drops <i>under</i> the last-place goat. Its riders stay put!</li></ul>
+  <li><b>Mud</b> (spaces ${c.mud[0]}-${c.mud[1]}): a goat starting its move there goes half as far. ${GOATS.blue.name} doesn't care.</li>
+  <li><b>The Ram</b> (space ${c.ram}): the first goat of the whole race to reach it falls head over hooves in love and <b>stops right there</b>, and so does its whole stack. Only the <b>top goat</b> of that stack is so dreamy that it <b>skips its next run</b>: that is the date. Afterwards the Ram wanders off.</li></ul>
   <h3>A stage = five Herd cards</h3>
   <p>Every goat runs exactly once per stage, in random order. On your turn do <b>one</b> thing:</p>
   <div class="tlist">
@@ -424,8 +437,8 @@ function openHelp() {
   <h3>The goats' dice</h3>`, `
   <h3>Het pad</h3>
   <ul><li>${c.finish} vakjes en dan de finish. Een geit die op een bezet vakje eindigt, <b>klimt erbovenop</b>; een geit draagt iedereen op zijn rug.</li>
-  <li><b>Modder</b> (vakjes ${c.mud[0]}-${c.mud[1]}): een geit die daar begint, komt maar half zo ver. Mudlark geeft er niks om.</li>
-  <li><b>De Ram</b> (vakje ${c.ram}): alleen de eerste geit van de héle race die hem <i>passeert</i> wordt verliefd en zakt <i>onder</i> de laatste geit. Zijn berijders blijven staan!</li></ul>
+  <li><b>Modder</b> (vakjes ${c.mud[0]}-${c.mud[1]}): een geit die daar begint, komt maar half zo ver. ${GOATS.blue.name} geeft er niks om.</li>
+  <li><b>De Ram</b> (vakje ${c.ram}): de eerste geit van de héle race die hem bereikt wordt smoorverliefd en <b>blijft daar staan</b>, en zijn hele stapel ook. Alleen de <b>bovenste geit</b> van die stapel is zo dromerig dat hij <b>zijn volgende ren overslaat</b>. Dat is de date. Daarna loopt de Ram weg.</li></ul>
   <h3>Een etappe = vijf kudde-kaarten</h3>
   <p>Elke geit rent precies één keer per etappe, in willekeurige volgorde. Op jouw beurt doe je <b>één</b> ding:</p>
   <div class="tlist">
@@ -458,11 +471,20 @@ async function showRoll(ev, pi) {
   const die = GOATS[ev.goat].die;
   const o = showOverlay(`<div class="rollbox"><div>${goatSvg(ev.goat, "effort", { size: 130 }).replace("<svg ", '<svg class="gt" ')}</div><b>${gName(ev.goat)} ${L("runs!", "rent!")}</b>${pi === undefined ? "" : `<small class="by">${esc(L(`${seatLabel(pi)}'s run`, `${seatLabel(pi)} laat rennen`))}</small>`}<div><span class="die roll" id="dv">?</span></div><div class="note" id="dn"></div></div>`);
   const dv = o.querySelector("#dv");
+  if (ev.skipped) {
+    dv.classList.remove("roll");
+    dv.textContent = "💤";
+    o.querySelector("#dn").textContent = L("Still dreaming about the Ram. Skips this run!", "Droomt nog van de Ram. Slaat deze ren over!");
+    sfx("annoyed", ev.goat);
+    await sleep(1500);
+    hideOverlay();
+    return;
+  }
   for (let i = 0; i < 6; i++) { dv.textContent = die[(Math.random() * 6) | 0]; sfx("tick"); await sleep(80); }
   dv.classList.remove("roll");
   dv.textContent = ev.roll;
   sfx("coin");
-  let note = "";
+  let note = ev.ram ? L("💘 The Ram stops it here!", "💘 De Ram houdt hem hier tegen!") : "";
   if (ev.slowed) note = ev.steps !== ev.roll ? L(`🟤 slowed to ${ev.steps}!`, `🟤 vertraagd tot ${ev.steps}!`) : "";
   if (!ev.slowed && ev.steps > ev.roll) note = L(`🥕 +1 snack → ${ev.steps}`, `🥕 +1 hapje → ${ev.steps}`);
   if (ev.slowed && ev.steps > Math.ceil(ev.roll / 2)) note += ` 🥕 +1 → ${ev.steps}`;
@@ -632,7 +654,15 @@ async function playTurn(myGen) {
     if (ev.t === "move") {
       await showRoll(ev, act.type === "run" ? pi : undefined);
       if (myGen !== gen) return false;
-      setExpr(ev.goat, ev.ram ? "love" : ev.slowed ? "effort" : "effort", ev.ram ? 2600 : 1400);
+      if (ev.skipped) {
+        log(L(`${gName(ev.goat)} was still dreaming about the Ram and skipped its run`, `${gName(ev.goat)} droomde nog van de Ram en sloeg de ren over`));
+        renderGoats(); renderHud();
+        if (!ramPresent()) { toast(`<span>💘 ${L("The Ram has had his date and wanders off. Bye, handsome!", "De Ram heeft zijn date gehad en loopt weg. Doeg, knapperd!")}</span>`, 2300); ramLeaves(); sfx("ram"); await sleep(1700); }
+        else await sleep(300);
+        continue;
+      }
+      setExpr(ev.goat, ev.ram ? "love" : "effort", ev.ram ? 2600 : 1400);
+      if (ev.ram) setExpr(ev.smitten, "love", 2600);
       hop(ev.goat);
       sfx(ev.slowed ? "mud" : "land");
       sfx(ev.slowed ? "annoyed" : "baa", ev.goat, 120);
@@ -645,11 +675,11 @@ async function playTurn(myGen) {
       if (myGen !== gen) return false;
       if (ev.ram) {
         $("ram").classList.remove("swoon"); void $("ram").offsetWidth; $("ram").classList.add("swoon");
-        toast(`<span>💘 ${L(`${gName(ev.goat)} fell for the Ram and goes to last place!`, `${gName(ev.goat)} werd verliefd op de Ram en gaat naar de laatste plek!`)}</span>`, 2300);
-        log(L(`${gName(ev.goat)} fell for the Ram`, `${gName(ev.goat)} werd verliefd op de Ram`));
-        burst(ev.goat, "💕");
+        toast(`<span>💘 ${L(`${gName(ev.smitten)} fell for the Ram! The stack stops here and ${gShort(ev.smitten)} skips its next run.`, `${gName(ev.smitten)} werd smoorverliefd op de Ram! De stapel stopt hier en ${gShort(ev.smitten)} slaat de volgende ren over.`)}</span>`, 2300);
+        log(L(`${gName(ev.smitten)} fell for the Ram`, `${gName(ev.smitten)} werd verliefd op de Ram`));
+        burst(ev.smitten, "💕");
         sfx("ram");
-        sfx("annoyed", ev.goat, 700);
+        sfx("annoyed", ev.smitten, 700);
         await sleep(1500);
         if (myGen !== gen) return false;
       }

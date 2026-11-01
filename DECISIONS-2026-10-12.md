@@ -27,3 +27,8 @@
 19. **Short themed "How to play"** in both languages on top of the help sheet; the old full rules sit under "All the rules".
 20. **Splash screen** (in-page, tap or ~3 s). The native Android splash and app icon (issue #26) are NOT done.
 21. **Pest card popup:** an opponent's trick shows as a big card (who, name, effect, target goat) for ~2 s (shorter on Fast, tap to skip) before the effect plays out.
+
+# Addendum 2026-11-01 (owner playtest of PR #40: "a lot better")
+22. **Ram rewritten (owner's idea):** the first goat to reach space 17 stops *on* it (whole stack stops); only the top goat of that stack skips its next run (the "date"); then the Ram wanders off the board. Replaces "goes under the last goat". Interpretation of an ambiguous request; change in `moveGoat` if it was meant differently. Sim (400 games): goat win rates 17-25%, ties 7%, Ram fires in ~19% of stages (it can now only fire once per race, stats count stages).
+23. **Goat names with colour in text:** Vincent van Goat (blue), Goatzilla (yellow), Nanny McBleat (green), ChewBAAAcca (red), Goaty Perry (white). Mapping chosen by trait; swap in `engine.js` (`GOATS`) + `GOAT_BLURB` in `web/art.js` and `web/main.js` if you want another. The orange goat is now red (`#e8412c`); its internal id stays `orange`.
+24. **Texts live in `web/main.js`:** every sentence is `L("English", "Nederlands")`; trick names/descriptions are the `TRICKS` block at the top, goat blurbs `GOAT_BLURB` (art.js) and `GOAT_BLURB_NL` (main.js).

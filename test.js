@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { newGame, moveGoat, ranking, goatSpace, apply, legalActions, DEFAULT_CONFIG, GOAT_IDS } from "./engine.js";
 
 function board(spaces, extra = {}) {
-  return { cfg: { ...DEFAULT_CONFIG }, rng: 1, spaces, deck: [], played: [], ramUsed: false, boosts: {}, slows: {}, ears: {}, finished: false, ...extra };
+  return { cfg: { ...DEFAULT_CONFIG }, rng: 1, spaces, deck: [], played: [], ramUsed: false, boosts: {}, slows: {}, ears: {}, skips: {}, finished: false, ...extra };
 }
 let n = 0;
 const t = (name, fn) => { fn(); n++; console.log("ok -", name); };
@@ -34,15 +34,26 @@ t("mud halves the roll (rounded up); Mudlark ignores it", () => {
   b = board({ 7: ["orange"] });
   assert.equal(moveGoat(b, "orange", 0).steps, 0);
 });
-t("Ram: first goat past space 17 goes under the last goat; riders stay", () => {
+t("Ram: the first goat to reach space 17 stops there; the stack stops, only its top goat skips its next run", () => {
   const b = board({ 2: ["green"], 16: ["yellow", "white"] });
   const e = moveGoat(b, "yellow", 2);
   assert.equal(e.ram, true);
-  assert.deepEqual(b.spaces[2], ["yellow", "green"]);
-  assert.deepEqual(b.spaces[18], ["white"]);
+  assert.deepEqual(b.spaces[17], ["yellow", "white"]);
+  assert.equal(e.smitten, "white");
   assert.equal(b.ramUsed, true);
-  const e2 = moveGoat(b, "white", 1); // Ram already used this stage
-  assert.equal(e2.ram, false);
+  const bottom = moveGoat(b, "yellow", 1); // the bottom goat is not smitten: it moves (and carries white)
+  assert.equal(bottom.skipped, undefined);
+  assert.deepEqual(b.spaces[18], ["yellow", "white"]);
+  const skip = moveGoat(b, "white", 3); // white skips this run, then is free again
+  assert.equal(skip.skipped, true);
+  assert.deepEqual(b.spaces[18], ["yellow", "white"]);
+  assert.equal(moveGoat(b, "white", 1).skipped, undefined);
+});
+t("Ram: a lone goat that reaches it stops on it and skips its next run; later goats walk past", () => {
+  const b = board({ 15: ["green"], 16: ["blue"] });
+  assert.equal(moveGoat(b, "green", 3).to, 17);
+  assert.equal(moveGoat(b, "blue", 3).ram, false); // Ram already used this race
+  assert.equal(moveGoat(b, "green", 2).skipped, true);
 });
 t("Earplugs: goat ignores the Ram and the Ram stays available", () => {
   const b = board({ 2: ["green"], 16: ["yellow"] }, { ears: { yellow: true } });

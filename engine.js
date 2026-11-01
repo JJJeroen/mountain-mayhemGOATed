@@ -3,11 +3,11 @@
 
 export const GOAT_IDS = ["blue", "yellow", "green", "orange", "white"];
 export const GOATS = {
-  blue: { name: "Mudlark", die: [1, 2, 2, 2, 2, 3], mudImmune: true },
-  yellow: { name: "Sprinter", die: [1, 1, 1, 3, 3, 3] },
-  green: { name: "Steady", die: [2, 2, 2, 2, 1, 3] },
-  orange: { name: "Leaper", die: [0, 1, 2, 2, 3, 4] },
-  white: { name: "Diva", die: [1, 1, 2, 2, 3, 3] },
+  blue: { name: "Vincent van Goat", die: [1, 2, 2, 2, 2, 3], mudImmune: true },
+  yellow: { name: "Goatzilla", die: [1, 1, 1, 3, 3, 3] },
+  green: { name: "Nanny McBleat", die: [2, 2, 2, 2, 1, 3] },
+  orange: { name: "ChewBAAAcca", die: [0, 1, 2, 2, 3, 4] },
+  white: { name: "Goaty Perry", die: [1, 1, 2, 2, 3, 3] },
 };
 export const TRICK_COPIES = { headbutt: 3, snack: 3, mudslide: 2, wobble: 3, swap: 2, earplugs: 2, whistle: 2, cheer: 3 };
 export const DEFAULT_CONFIG = {
@@ -38,7 +38,7 @@ export function cloneBoard(s) {
   const spaces = {};
   for (const k in s.spaces) spaces[k] = s.spaces[k].slice();
   return { ...s, spaces, deck: s.deck.slice(), played: s.played.slice(),
-    boosts: { ...s.boosts }, slows: { ...s.slows }, ears: { ...s.ears } };
+    boosts: { ...s.boosts }, slows: { ...s.slows }, ears: { ...s.ears }, skips: { ...s.skips } };
 }
 
 /** Goats from first place to last: furthest space first, top of a stack first. */
@@ -61,6 +61,11 @@ function inMud(b, sp) {
 /** Move a goat (carrying everyone above it). Returns an event describing what happened. */
 export function moveGoat(b, goat, roll) {
   const from = goatSpace(b, goat);
+  // A goat that fell for the Ram sits out its next run (the card is still played).
+  if (b.skips?.[goat]) {
+    delete b.skips[goat];
+    return { goat, roll, steps: 0, from, to: from, slowed: false, carried: [], ram: false, skipped: true, finished: false };
+  }
   let steps = roll;
   const muddy = inMud(b, from) && !GOATS[goat].mudImmune;
   const slowed = muddy || !!b.slows[goat];
@@ -74,14 +79,14 @@ export function moveGoat(b, goat, roll) {
   const ev = { goat, roll, steps, from, to: dest, slowed, carried: carried.slice(1), ram: false, finished: false };
 
   if (!b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly) && !b.ears[goat]) {
-    // The goat falls in love: riders stay on the landing space, the goat goes under the last goat.
+    // Love at first sight: the whole moving stack stops on the Ram's space, and its top goat is so smitten
+    // that it skips its own next run.
     b.ramUsed = true;
     ev.ram = true;
-    if (carried.length > 1) stackAt(b, dest).push(...carried.slice(1));
-    const last = ranking(b).at(-1);
-    if (last) b.spaces[goatSpace(b, last)].unshift(goat);
-    else stackAt(b, dest).push(goat);
-    ev.to = goatSpace(b, goat);
+    ev.to = b.cfg.ram;
+    ev.smitten = carried.at(-1);
+    (b.skips ||= {})[ev.smitten] = true;
+    stackAt(b, b.cfg.ram).push(...carried);
   } else {
     stackAt(b, dest).push(...carried);
   }
@@ -162,7 +167,7 @@ export function newGame({ players = 4, seed = 1, cfg = {} } = {}) {
   const c = { ...DEFAULT_CONFIG, ...cfg };
   const s = {
     cfg: c, rng: seed | 0, nPlayers: players, spaces: {}, deck: [], played: [], ramUsed: false,
-    boosts: {}, slows: {}, ears: {}, finished: false, legStacks: {}, finalBets: [], trickDeck: [],
+    boosts: {}, slows: {}, ears: {}, skips: {}, finished: false, legStacks: {}, finalBets: [], trickDeck: [],
     discard: [], turn: 0, stage: 0, players: [],
     stats: { actions: {}, tricks: {}, ramTriggers: 0, stages: 0, runs: 0, mudSlowed: 0, leadChanges: 0, history: [], preFinal: null },
   };
