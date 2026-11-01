@@ -815,7 +815,8 @@ function startGame(saved) {
     buildBoard();
     renderGoats();
     renderHud();
-    toast(`<span>🏁 ${saved ? L("Welcome back! Your game goes on.", "Welkom terug! Je spel gaat verder.") : L(`The goats are off! ${seats[s.turn].human ? "You start" : esc(seats[s.turn].name) + " starts"} the race.`, `De geiten zijn los! ${seats[s.turn].human ? "Jij begint" : esc(seats[s.turn].name) + " begint"} de race.`)}</span>`, 2000);
+    toast(`<span>🏁 ${saved ? L("Welcome back! Your game goes on.", "Welkom terug! Je spel gaat verder.") : L(`The goats are off! ${seats[s.turn].human ? "You start" : esc(seats[s.turn].name) + " starts"} the race.`, `De geiten zijn los! ${seats[s.turn].human ? "Jij begint" : esc(seats[s.turn].name) + " begint"} de race.`)}</span>`, 2600);
+    if (!saved) setTimeout(() => { if (myGen === gen) toast(`<span>🎲 ${L("Every goat rolled its own die to start, that is why they are spread out. The goats run on their own dice too.", "Elke geit gooide zijn eigen dobbelsteen om te starten, daarom staan ze verspreid. Ook onderweg rent elke geit op zijn eigen dobbelsteen.")}</span>`, 5200, true); }, 2700);
     gameLoop(myGen);
   });
 }
