@@ -34,8 +34,8 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 ## On your turn: do exactly one of five actions
 1. **Leg bet.** Take the top **leg-bet token** of a goat colour (each colour has a stack worth 6, then 4, then 2). You bet that this goat leads at the end of the stage.
 2. **Play a trick.** Play one trick card from your hand, face up, and do what it says (see Tricks). Used cards go to the discard pile. Earns nothing by itself.
-3. **Run.** Flip the top card of the Herd deck, roll that goat's die, and move it. Take a **hoof token**: +1 hay at stage end.
-4. **Scout.** Secretly look at the next card in the Herd deck. Other players see that you scouted but not what you saw. Costs your turn, earns nothing.
+3. **Run.** Flip the top card of the Herd deck, roll that goat's die, and move it. Take a **hoof token**: +2 hay at stage end.
+4. **Scout.** Secretly look at the next card in the Herd deck. Other players see nothing. Scouting is **free**: you stay on turn and still take your action. You can hold one peek at a time, and any Run makes it stale.
 5. **Summit pledge.** Secretly pledge a goat as the **Winner** or the **Loser** of the whole race. You get one of each per game (on two different goats) and a pledge can never be taken back. A pledge is worth more the earlier you make it: **10 / 8 / 7 / 6 / 5 / 4 hay** in stage 1 / 2 / 3 / 4 / 5 / 6+.
 
 ## Tricks (v1 set, face-up, one per action)
@@ -46,7 +46,7 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 | **Mud Slide** | Pick a goat that has not moved this stage: its run is **halved** (like mud), even outside mud. |
 | **Wobble** | The top goat of any stack with 2+ goats falls **one space back**. |
 | **Swap Places** | Two single goats (not stacked) trade spaces. |
-| **Earplugs** | Pick a goat: it **ignores the Ram** this stage. |
+| **Earplugs** | Pick a goat: if it is the **top goat** of a stack the Ram stops, it does **not skip** its next run this stage (the stack still stops). |
 | **Whistle** | Secretly look at the top Herd card, then keep it on top or **bury** it at the bottom of the deck. Others see you used it, not what you saw. |
 | **Cheer** | Pick a goat that leads: you earn **2 hay** at stage end if it still leads. |
 
@@ -57,14 +57,14 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 - Ranking: furthest space leads; within a stack, the goat on top leads.
 
 ## The Ram (once per race)
-The first goat of the whole race to **reach or pass** space 17 (start below it) falls head over hooves in love with the Ram and **stops on the Ram's space**; so does the whole stack it carries. The **top goat** of that stack is so dreamy that it **skips its next run** (its Herd card is still played, it just doesn't move): that is the date. Goats below it are not affected and carry it along if they move. After the date the Ram wanders off and every later goat walks straight past. Earplugs make a goat ignore the Ram.
+The first goat of the whole race to **reach or pass** space 17 (start below it) falls head over hooves in love with the Ram and **stops on the Ram's space**; so does the whole stack it carries. The **top goat** of that stack is so dreamy that it **skips its next run** (its Herd card is still played, it just doesn't move): that is the date. Goats below it are not affected and carry it along if they move. After the date the Ram wanders off and every later goat walks straight past. Earplugs on the top goat spare it the skipped run.
 
 ## End of a stage: scoring
 Based on the current ranking:
 - Leg-bet tokens on the **leading** goat pay their value (6 / 4 / 2).
 - Leg-bet tokens on the **second** goat pay **1 hay**.
 - Every other leg-bet token costs **1 hay** (never below 0).
-- Each hoof token pays **1 hay**.
+- Each hoof token pays **2 hay**.
 
 Then discard leg-bet tokens, reset the Herd deck, and the next player starts a new stage.
 
@@ -75,6 +75,8 @@ The race ends when the first goat crosses the finish line (after space 20, or 15
 - A Loser pledge is correct if that goat finishes last.
 
 Most hay wins. **Tiebreak:** most correct pledges; still equal = shared win.
+
+**Pledges** are summed per player and clamped once too.
 
 **Hay floor.** Hay never drops below 0: each stage's total is summed first and then clamped once. This is deliberate: it stops a player who starts badly from being punished further, at the cost of letting a broke player gamble freely. Revisit after playtests.
 
@@ -94,8 +96,11 @@ Most hay wins. **Tiebreak:** most correct pledges; still equal = shared win.
 - **Trick set:** 8 cards in v1; how many copies of each, and whether to add reaction cards (play out of turn), needs playtesting. Reactions make online play harder, so they are v2.
 - **Hand size and draw rate** (3 start, +1 per stage, max 4) are guesses.
 - **Track length** (20) and **die faces** need Monte Carlo balancing.
-- **Peek** may need a limit, e.g. one scout per player per stage.
+- **Peek** is free and one-at-a-time (owner's call 2026-11-01); watch that it does not become automatic every turn.
 - **Ram detail:** is it fair that riders profit when their carrier gets heartbroken? Playtest.
 - **Name/IP:** run trademark and store searches for "Mountain Mayhem" before branding (deferred by the owner).
 - **Hay inflation:** payouts could be scaled down; held back until a playtest shows whether it matters.
 - **Pledge ladder** (10/8/7/6/5/4, wrong -3) is untuned beyond the hedging test: check whether early pledges are too attractive.
+
+## Loser pledges pay less (2026-11-01)
+A correct **Loser** pledge pays **3 less** than a Winner pledge from the same stage (minimum 2): 7/5/4/3/2/2 against 10/8/7/6/5/4. Last place is far more predictable (red finishes last 26.6% of races, blue 13.3%), so a blind stage-1 Loser pledge was +EV in ~96% of games. At 7 it is about break-even blind (EV -0.05 best-of-five, -0.34 picking red), so only informed pledges pay. Shown in the pledge sheet and the help. Config: `loserDrop`.

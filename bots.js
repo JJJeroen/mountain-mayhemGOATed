@@ -57,13 +57,21 @@ function relGain(after, before, p) {
  * opts.n: stage playouts per decision, opts.finalMargin: how much better than 0 a final bet must look,
  * opts.scoutValue: value assigned to scouting, opts.eps: chance of a random move (human-like slips).
  */
-export function smartBot({ n = 24, nFinal = 16, nConfirm = 48, finalMargin = 0.5, minProb = 0.5, legPatience = 0, scoutValue = 0.25, eps = 0, maxTricks = 10 } = {}) {
+export function smartBot({ n = 24, nFinal = 16, nConfirm = 48, finalMargin = 0.5, minProb = 0.5, legPatience = 0, scoutValue = 0.25, scoutChance = 1, eps = 0, maxTricks = 10 } = {}) {
   const o = { rng: (Math.random() * 2 ** 31) | 0 };
   const fn = (s, p) => {
     const legal = legalActions(s, p);
     fn.info = null;
-    if (eps && rngNext(o) < eps) return legal[randInt(o, legal.length)];
+    if (eps && rngNext(o) < eps) {
+      // A human-like slip is a poor everyday move (a wrong bet, a pointless card), never a blind summit pledge.
+      const slips = legal.filter((x) => x.type !== "final" && x.type !== "scout");
+      return slips[randInt(o, slips.length)];
+    }
     const me = s.players[p];
+    // Peeking is a free action (you stay on turn), so a sensible bot always peeks first when it can.
+    // scoutChance < 1 makes weaker levels forget to do it.
+    const scout = legal.find((a) => a.type === "scout");
+    if (scout && rngNext(o) < scoutChance) { fn.info = { chosen: "scout", gap: 0, trickEv: {}, hand: [...me.hand] }; return scout; }
     const seed0 = (rngNext(o) * 2 ** 30) | 0;
 
     // Base stage distribution (same seeds reused so tricks are compared fairly).
@@ -96,9 +104,7 @@ export function smartBot({ n = 24, nFinal = 16, nConfirm = 48, finalMargin = 0.5
         const unplayed = Math.max(0, s.deck.length - 1) / 4;
         consider(a, pl * v + ps - (1 - pl - ps) - legPatience * unplayed);
       } else if (a.type === "run") {
-        consider(a, 1.0);
-      } else if (a.type === "scout") {
-        consider(a, scoutValue);
+        consider(a, s.cfg.hoofHay);
       }
     }
 
@@ -159,11 +165,10 @@ export function smartBot({ n = 24, nFinal = 16, nConfirm = 48, finalMargin = 0.5
           lose[r.at(-1)]++;
         }
       };
-      const value = pledgeValue(s);
       const pledges = legal.filter((a) => a.type === "final");
       const probOf = (a) => ((a.kind === "winner" ? win[a.goat] : lose[a.goat]) + 1) / (total + 5);
       const evOf = (a) => {
-        const prob = probOf(a);
+        const prob = probOf(a), value = pledgeValue(s, a.kind);
         return prob < minProb ? -Infinity : prob * value - (1 - prob) * s.cfg.finalPenalty - finalMargin;
       };
       playouts(nFinal);

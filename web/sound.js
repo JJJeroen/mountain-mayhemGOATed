@@ -11,6 +11,9 @@ export function unlockAudio() {
   } catch { /* no audio available */ }
 }
 
+// After the app was in the background the browser may have suspended audio again.
+if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => { if (!document.hidden && ctx && ctx.state !== "running") ctx.resume().catch(() => {}); });
+
 function tone(freq, at, dur, { type = "sine", gain = 0.16, to = freq } = {}) {
   const t = ctx.currentTime + at;
   const o = ctx.createOscillator(), g = ctx.createGain();
