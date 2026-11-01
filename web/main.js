@@ -283,7 +283,7 @@ function renderHud() {
   const canScout = legal.some((a) => a.type === "scout");
   const canFinal = legal.some((a) => a.type === "final");
   $("actions").innerHTML = `
-    <div class="hint ${settings.hints && myTurn ? "coach" : ""}">${s.finished ? "" : myTurn ? (settings.hints ? coachText(me) : L("Your turn: tap a goat above to bet, or choose an action", "Jouw beurt: tik op een geit om te gokken, of kies een actie")) : `<span class="turnb">${avatarSvg(seats[s.turn].avatar, 24)}<b>${esc(seats[hudActor ?? s.turn].name)}</b> ${L(hudActor === null ? "is thinking…" : "just played", hudActor === null ? "denkt na…" : "was net aan de beurt")}</span>`}</div>
+    <div class="hint ${settings.hints && myTurn ? "coach" : ""}">${s.finished ? "" : myTurn ? (settings.hints ? coachText(me) : L("Your turn: tap a goat above to bet, or choose an action", "Jouw beurt: tik op een geit om te gokken, of kies een actie")) : `<span class="turnb">${avatarSvg(seats[hudActor ?? s.turn].avatar, 24)}<b>${esc(seats[hudActor ?? s.turn].name)}</b> ${L(hudActor === null ? "is thinking…" : "just played", hudActor === null ? "denkt na…" : "was net aan de beurt")}</span>`}</div>
     <button class="abtn run" id="aRun" ${myTurn ? "" : "disabled"}><span class="ic">🏃</span>${L("Run", "Ren")}${sub(L("roll the next goat", "gooi voor de volgende geit"))}</button>
     <button class="abtn trick" id="aTrick" ${canTrick ? "" : "disabled"}><span class="ic">🃏</span>${L("Trick", "Pestkaart")} (${me.hand.length})${sub(L("play a card", "speel een kaart"))}</button>
     <button class="abtn scout" id="aScout" ${canScout ? "" : "disabled"}><span class="ic">👀</span>${L("Scout", "Gluren")}${sub(L("free, then act", "gratis, dan nog iets"))}</button>
@@ -587,8 +587,6 @@ async function showFinal(preFinal) {
   if (winners.some((w) => w.i === 0)) confetti();
   o.querySelector("#st").scrollIntoView({ behavior: "smooth", block: "end" });
   o.querySelector("#again").onclick = () => { hideOverlay(); try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ } startGame(); };
-    const rs = o.querySelector("#resume");
-    if (rs) rs.onclick = () => { unlockAudio(); startGame(saved); };
   o.querySelector("#menu").onclick = () => { hideOverlay(); showStart(); };
 }
 
@@ -632,7 +630,7 @@ async function playTurnInner(myGen) {
   let act;
   renderHud();
   if (seats[pi].human) {
-    sfx("yourTurn");
+    if (!s.players[pi].knownTop) sfx("yourTurn");
     act = await new Promise((res) => { humanResolve = res; renderHud(); });
   } else {
     $("toast").querySelectorAll(".tst:not(.keep)").forEach((t) => t.remove()); // drop the previous player's message so it is clear whose turn this is
@@ -677,7 +675,7 @@ async function playTurnInner(myGen) {
         continue;
       }
       setExpr(ev.goat, ev.ram ? "love" : "effort", ev.ram ? 2600 : 1400);
-      if (ev.ram) setExpr(ev.smitten, "love", 2600);
+      if (ev.ram && !ev.deaf) setExpr(ev.smitten, "love", 2600);
       hop(ev.goat);
       sfx(ev.slowed ? "mud" : "land");
       sfx(ev.slowed ? "annoyed" : "baa", ev.goat, 120);
@@ -690,11 +688,11 @@ async function playTurnInner(myGen) {
       if (myGen !== gen) return false;
       if (ev.ram) {
         $("ram").classList.remove("swoon"); void $("ram").offsetWidth; $("ram").classList.add("swoon");
-        toast(`<span>💘 ${L(`${gName(ev.smitten)} fell for the Ram! The stack stops here and ${gShort(ev.smitten)} skips its next run.`, `${gName(ev.smitten)} werd smoorverliefd op de Ram! De stapel stopt hier en ${gShort(ev.smitten)} slaat de volgende ren over.`)}</span>`, 2300);
+        toast(ev.deaf ? `<span>🎧 ${L(`${gName(ev.smitten)} fell for the Ram, but the earplugs help: the stack stops, nobody skips a run.`, `${gName(ev.smitten)} viel voor de Ram, maar de oordoppen helpen: de stapel stopt, niemand slaat een ren over.`)}</span>` : `<span>💘 ${L(`${gName(ev.smitten)} fell for the Ram! The stack stops here and ${gShort(ev.smitten)} skips its next run.`, `${gName(ev.smitten)} werd smoorverliefd op de Ram! De stapel stopt hier en ${gShort(ev.smitten)} slaat de volgende ren over.`)}</span>`, 2300);
         log(L(`${gName(ev.smitten)} fell for the Ram`, `${gName(ev.smitten)} werd verliefd op de Ram`));
         burst(ev.smitten, "💕");
         sfx("ram");
-        sfx("annoyed", ev.smitten, 700);
+        if (!ev.deaf) sfx("annoyed", ev.smitten, 700);
         await sleep(1500);
         if (myGen !== gen) return false;
       }
@@ -847,6 +845,8 @@ function showStart() {
     o.querySelectorAll("#lvl button").forEach((b) => (b.onclick = () => { settings.level = b.dataset.l; saveSettings(); draw(); }));
     wireSettings(o, draw);
     o.querySelector("#play").onclick = () => { unlockAudio(); settings.name = o.querySelector("#nm").value.trim(); saveSettings(); startGame(); };
+    const rs = o.querySelector("#resume");
+    if (rs) rs.onclick = () => { unlockAudio(); startGame(saved); };
     o.querySelector("#how").onclick = openHelp;
   };
   draw();

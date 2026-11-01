@@ -130,6 +130,8 @@ t("a run pays hoofHay per hoof at stage end, and hay never goes below 0", () => 
   const before = s.stage;
   apply(s, { type: "run" });
   assert.equal(s.stage, before + 1);
+  // hay: 0 + legs on blue (+6/+4 if blue leads, else -1 each) floored at 0, plus 2 per hoof: never below 2 for the runner
+  assert.ok(s.players[0].hay >= s.cfg.hoofHay);
   assert.ok(s.players.every((p) => p.hay >= 0));
 });
 t("smart bots return legal actions whatever the hidden deck order is", () => {
@@ -145,5 +147,21 @@ t("smart bots return legal actions whatever the hidden deck order is", () => {
       assert.ok(legalActions(s, 0).some((x) => JSON.stringify(x) === JSON.stringify(act)));
     }
   }
+});
+t("goat already past the Ram can still finish", () => {
+  const b = board({ 20: ["blue"], 3: ["yellow"], 1: ["white"], 2: ["green"], 4: ["orange"] }, { ramUsed: false });
+  const ev = moveGoat(b, "blue", 2);
+  assert.equal(ev.ram, false);
+  assert.ok(b.finished);
+});
+t("summit pledges: one per kind, no repeated goat, stage-1 value", () => {
+  const s = newGame({ players: 2, seed: 5 });
+  s.turn = 0;
+  const fin = () => legalActions(s, 0).filter((a) => a.type === "final");
+  apply(s, fin().find((a) => a.kind === "winner" && a.goat === "blue"));
+  s.turn = 0;
+  const rest = fin();
+  assert.equal(s.finalBets[0].value, s.cfg.pledgeValues[0]);
+  assert.ok(rest.every((a) => a.kind === "loser" && a.goat !== "blue") && rest.length === 4);
 });
 console.log(n, "tests passed");
