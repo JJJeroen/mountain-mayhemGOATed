@@ -238,3 +238,6 @@ details.full summary{cursor:pointer;font-weight:700;font-size:16px}
 .ramleave{animation:ramleave 1.5s ease-in forwards}
 @keyframes ramleave{0%{translate:0 0;rotate:0deg}20%{translate:0 -10px;rotate:-6deg}100%{translate:calc(var(--dir,1)*130vw) 0;rotate:6deg}}
 .langseg{max-width:260px;margin:0 auto 4px}
+
+.dice{display:flex;gap:6px;justify-content:center;margin:6px 0}
+.die{width:34px;height:34px;border:2.5px solid var(--ink);border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;box-shadow:0 2px 0 var(--ink)}

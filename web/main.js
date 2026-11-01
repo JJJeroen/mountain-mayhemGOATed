@@ -167,7 +167,7 @@ function buildBoard() {
     el.dataset.g = g;
     el.style.width = geo.gw + "px";
     el.innerHTML = `<div class="in"><div class="flip"></div></div><span class="tag">${gShort(g)}</span>`;
-    el.onclick = () => { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1600); };
+    el.onclick = () => openGoatInfo(g);
     b.appendChild(el);
     goatEls[g] = el;
     el.dataset.key = "";
@@ -309,6 +309,20 @@ function toast(html, ms = 1500, keep = false) {
 function log(text) { logLines.push(`${L("Stage", "Etappe")} ${s ? s.stage : 1}: ${text}`); if (logLines.length > 80) logLines.shift(); }
 
 // ---------------------------------------------------------------- sheets
+
+// What makes each goat different: its own die (the faces are shown) and a one-line trait.
+const GOAT_TRAIT = {
+  blue: ["Steady and never slowed by mud.", "Gelijkmatig en mud houdt hem niet tegen."],
+  yellow: ["All or nothing: it moves 1 or 3, never 2.", "Alles of niets: hij rent 1 of 3, nooit 2."],
+  green: ["Reliable: it almost always moves 2.", "Betrouwbaar: hij rent bijna altijd 2."],
+  orange: ["Wild: anything from standing still (0) to 4.", "Wild: alles van blijven staan (0) tot 4."],
+  white: ["Middle of the road: 1 to 3.", "Middenmoot: 1 tot 3."],
+};
+function openGoatInfo(g) {
+  if (!$("sheet").hidden) return;
+  const faces = GOATS[g].die.map((d) => `<span class="die">${d}</span>`).join("");
+  openSheet(`<div class="center">${goatSvg(g, "neutral", { size: 120 })}<h2>${gName(g)}</h2><div class="dice">${faces}</div><p><b>${L(...GOAT_TRAIT[g])}</b></p><p class="sub">${blurb(g)}</p><p class="sub">${L("Every goat has its own die. Know them, bet smarter.", "Elke geit heeft zijn eigen dobbelsteen. Ken ze, gok slimmer.")}</p></div>`);
+}
 function openSheet(html, { dismiss = true } = {}) {
   const sh = $("sheet");
   sh.hidden = false;
@@ -412,7 +426,7 @@ function openHelp() {
     <li><b>🃏 Pest card:</b> play a nasty little trick: shove, swap, snack or slow a goat down, and more. Everybody sees it.</li>
     <li><b>🎯 Summit pledge:</b> once per game, secretly bet on who wins (and who comes last). The earlier you dare, the more hay it pays.</li>
    </ol>
-   <p>One action per turn. When all five goats have run, the stage is scored. First goat over the line ends the race!</p>
+   <p>Every goat has its own die (tap a goat on the mountain to see it): some are steady, some wild. One action per turn. When all five goats have run, the stage is scored. First goat over the line ends the race!</p>
   </div>`, `
   <div class="quick">
    <h2>🐐 Zo speel je het</h2>
@@ -423,7 +437,7 @@ function openHelp() {
     <li><b>🃏 Pestkaart:</b> Er zijn 8 soorten, zoals duwen, wisselen, extra hard rennen of een geit afremmen. </li>
     <li><b>🎯 Topgokken:</b> één keer per spel gok je in het geheim wie wint (en wie laatste wordt). Hoe eerder je durft, hoe meer hooi het oplevert als je het goed hebt.</li>
    </ol>
-   <p>Eén actie per beurt. Als alle vijf geiten gerend hebben, is de etappe klaar en worden de punten geteld. Loopt een geit tijdens het spel over de finish? Dan is de race meteen ten einde!</p>
+   <p>Elke geit heeft zijn eigen dobbelsteen (tik op een geit op de berg om hem te zien): sommige zijn gelijkmatig, andere wild. Eén actie per beurt. Als alle vijf geiten gerend hebben, is de etappe klaar en worden de punten geteld. Loopt een geit tijdens het spel over de finish? Dan is de race meteen ten einde!</p>
   </div>`);
   const full = L(`
   <h3>The path</h3>
@@ -816,7 +830,7 @@ function startGame(saved) {
     renderGoats();
     renderHud();
     toast(`<span>🏁 ${saved ? L("Welcome back! Your game goes on.", "Welkom terug! Je spel gaat verder.") : L(`The goats are off! ${seats[s.turn].human ? "You start" : esc(seats[s.turn].name) + " starts"} the race.`, `De geiten zijn los! ${seats[s.turn].human ? "Jij begint" : esc(seats[s.turn].name) + " begint"} de race.`)}</span>`, 2600);
-    if (!saved) setTimeout(() => { if (myGen === gen) toast(`<span>🎲 ${L("Every goat rolled its own die to start, that is why they are spread out. The goats run on their own dice too.", "Elke geit gooide zijn eigen dobbelsteen om te starten, daarom staan ze verspreid. Ook onderweg rent elke geit op zijn eigen dobbelsteen.")}</span>`, 5200, true); }, 2700);
+    if (!saved) setTimeout(() => { if (myGen === gen) toast(`<span>🎲 ${L("Every goat rolled its own die to start, that is why they are spread out. Tap a goat to see its die.", "Elke geit gooide zijn eigen dobbelsteen om te starten, daarom staan ze verspreid. Tik op een geit om zijn dobbelsteen te zien.")}</span>`, 5200, true); }, 2700);
     gameLoop(myGen);
   });
 }
