@@ -7,7 +7,7 @@ import { goatSvg, ramSvg, avatarSvg, AVATARS, GOAT_BLURB } from "./art.js";
 
 const $ = (id) => document.getElementById(id);
 const COL = { blue: "#4f95e8", yellow: "#f7c52b", green: "#58b868", orange: "#e8412c", white: "#f8f4ee" };
-const SPEEDS = { slow: 1.8, normal: 1, fast: 0.45 };
+const SPEEDS = { slow: 3, normal: 1, fast: 0.45 };
 const mult = () => SPEEDS[settings.speed] ?? 1;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms * mult()));
 // Goat names always carry their colour ("Goatzilla (yellow)"); orange goat is drawn red. gShort = name only (board tags).
@@ -181,16 +181,23 @@ function exprOf(g) {
 }
 function setExpr(g, e, ms = 1800) {
   expr[g] = { e, until: Date.now() + ms };
-  renderGoats();
-  setTimeout(renderGoats, ms + 30);
+  renderGoats(true);
+  setTimeout(() => renderGoats(true), ms + 30);
 }
 
-function renderGoats() {
+// While a move is being announced (the opponent's card, the dice roll) the engine state is already one move ahead.
+// Background redraws (board resize, expression timers) must keep showing the positions from before the move,
+// otherwise goats jump before the dice have rolled. Only an explicit renderGoats() shows the new positions.
+let frozen = null;
+const freezeGoats = () => { frozen = { spaces: JSON.parse(JSON.stringify(s.spaces)), skips: { ...s.skips } }; };
+function renderGoats(hold = false) {
   if (!s) return;
-  const rank = ranking(s);
+  if (!hold) frozen = null;
+  const v = hold && frozen ? { ...s, spaces: frozen.spaces, skips: frozen.skips } : s;
+  const rank = ranking(v);
   for (const g of GOAT_IDS) {
-    const sp = goatSpace(s, g);
-    const lvl = s.spaces[sp].indexOf(g);
+    const sp = goatSpace(v, g);
+    const lvl = v.spaces[sp].indexOf(g);
     const p = slotXY(sp, lvl);
     const el = goatEls[g];
     const mud = sp >= s.cfg.mud[0] && sp <= s.cfg.mud[1];
@@ -204,7 +211,7 @@ function renderGoats() {
     el.style.transform = `translate(${p.x}px,${p.y}px)`;
     el.style.zIndex = p.z;
     el.classList.toggle("lead", rank[0] === g);
-    el.querySelector(".tag").textContent = gShort(g) + (s.skips?.[g] ? " 💕💤" : "");
+    el.querySelector(".tag").textContent = gShort(g) + (v.skips?.[g] ? " 💕💤" : "");
   }
 }
 
@@ -656,6 +663,7 @@ async function playTurnInner(myGen) {
   const before = s.players.map((p) => ({ legs: p.legs.map((l) => ({ ...l })), hoofs: p.hoofs, cheers: p.cheers.map((c) => ({ ...c })), hay: p.hay }));
   const leaderBefore = ranking(s)[0];
   const stageBefore = s.stage;
+  freezeGoats();
   const events = apply(s, act);
   saveGame();
   hudActor = seats[pi].human ? null : pi;
@@ -794,7 +802,7 @@ function applyLang() {
   $("btnSet").setAttribute("aria-label", L("Settings", "Instellingen"));
   $("btnLog").setAttribute("aria-label", L("Game log", "Spellogboek"));
   $("btnHelp").setAttribute("aria-label", L("How to play", "Uitleg"));
-  if (s) { buildBoard(); for (const g of GOAT_IDS) goatEls[g].dataset.key = ""; renderGoats(); renderHud(); }
+  if (s) { buildBoard(); for (const g of GOAT_IDS) goatEls[g].dataset.key = ""; renderGoats(true); renderHud(); }
 }
 function wireSettings(root, redraw) {
   root.querySelectorAll("#lng button").forEach((b) => (b.onclick = () => { settings.lang = b.dataset.v; saveSettings(); applyLang(); redraw(); }));
@@ -873,7 +881,7 @@ $("btnLog").onclick = openLog;
 // Rebuild the board whenever its box really changes size (the footer text above changes height as turns go by,
 // which used to leave the bottom row clipped until the window was resized).
 let rz;
-const refit = () => { if (s && (Math.abs($("board").clientWidth - geo.w) > 1 || Math.abs($("board").clientHeight - geo.h) > 1)) { buildBoard(); for (const g of GOAT_IDS) goatEls[g].dataset.key = ""; renderGoats(); } };
+const refit = () => { if (s && (Math.abs($("board").clientWidth - geo.w) > 1 || Math.abs($("board").clientHeight - geo.h) > 1)) { buildBoard(); for (const g of GOAT_IDS) goatEls[g].dataset.key = ""; renderGoats(true); } };
 window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(refit, 100); });
 if (window.ResizeObserver) new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(refit, 60); }).observe($("board"));
 
