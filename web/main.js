@@ -26,7 +26,7 @@ const TRICKS = {
   mudslide: trick("🛝", ["Mud Slide", "Modderglijbaan"], ["A goat that hasn't run this stage has its run halved.", "Een geit die deze etappe nog niet gerend heeft, rent maar half zo ver."]),
   wobble: trick("🫨", ["Wobble", "Wankelen"], ["The top goat of a stack falls one space back.", "De bovenste geit van een stapel valt één vakje terug."]),
   swap: trick("🔀", ["Swap Places", "Plekwissel"], ["Two goats that stand alone trade spaces.", "Twee geiten die alleen staan, ruilen van vakje."]),
-  earplugs: trick("🎧", ["Earplugs", "Oordoppen"], ["A goat ignores the Ram this stage.", "Een geit trekt zich deze etappe niets aan van de Ram."]),
+  earplugs: trick("🎧", ["Earplugs", "Oordoppen"], ["This goat does not skip a run if the Ram stops its stack.", "De bovenste geit van de stapel slaat bij de Ram geen ren over."]),
   whistle: trick("📯", ["Whistle", "Fluitje"], ["Peek at the next Herd card, then keep it on top or bury it.", "Gluur naar de volgende kudde-kaart en laat hem bovenop of stop hem onderaan."]),
   cheer: trick("📣", ["Cheer", "Aanmoedigen"], ["Back the current leader: +2 hay at stage end if it still leads.", "Steun de koploper: +2 hooi aan het eind van de etappe als hij nog voorop ligt."]),
 };
@@ -229,10 +229,10 @@ const sub = (t) => (settings.hints ? `<small class="sb">${t}</small>` : "");
 /** "Learn to play" coaching line for the human's turn. */
 function coachText(me) {
   const stageLeft = s.deck.length;
-  if (me.knownTop) return L(`👀 Only <b>you</b> know <b>${gName(me.knownTop)}</b> runs next (glowing card above). Use it: take a leg bet before it moves, or Run to play it out. One action per turn.`,
-    `👀 Alleen <b>jij</b> weet dat <b>${gName(me.knownTop)}</b> als volgende rent (gloeiende kaart boven). Gebruik dat: neem een etappegok voordat hij rent, of ren zelf. Eén actie per beurt.`);
-  return L(`<b>Pick one action</b> (it ends your turn): tap a goat to bet it finishes the stage 1st (6/4/2 hay, 2nd place +1, wrong −1). <b>Run</b> plays the next Herd card (+1 hoof hay). ${stageLeft} card${stageLeft === 1 ? "" : "s"} left this stage.`,
-    `<b>Kies één actie</b> (daarna is de volgende aan de beurt): tik op een geit om te gokken dat hij de etappe wint (6/4/2 hooi, 2e plek +1, fout −1). <b>Ren</b> speelt de volgende kudde-kaart (+1 hoefhooi). Nog ${stageLeft} kaart${stageLeft === 1 ? "" : "en"} in deze etappe.`);
+  if (me.knownTop) return L(`👀 Only <b>you</b> know <b>${gName(me.knownTop)}</b> runs next (glowing card above). Use it: take a leg bet before it moves, or Run to play it out. Peeking is free; then take one more action.`,
+    `👀 Alleen <b>jij</b> weet dat <b>${gName(me.knownTop)}</b> als volgende rent (gloeiende kaart boven). Gebruik dat: neem een etappegok voordat hij rent, of ren zelf. Gluren is gratis; daarna doe je nog één actie.`);
+  return L(`<b>Pick one action</b> (it ends your turn): tap a goat to bet it finishes the stage 1st (6/4/2 hay, 2nd place +1, wrong −1). <b>Run</b> plays the next Herd card (+${s.cfg.hoofHay} hoof hay). ${stageLeft} card${stageLeft === 1 ? "" : "s"} left this stage.`,
+    `<b>Kies één actie</b> (daarna is de volgende aan de beurt): tik op een geit om te gokken dat hij de etappe wint (6/4/2 hooi, 2e plek +1, fout −1). <b>Ren</b> speelt de volgende kudde-kaart (+${s.cfg.hoofHay} hoefhooi). Nog ${stageLeft} kaart${stageLeft === 1 ? "" : "en"} in deze etappe.`);
 }
 function renderHud() {
   $("stageNo").textContent = s.stage;
@@ -281,7 +281,7 @@ function renderHud() {
     <div class="hint ${settings.hints && myTurn ? "coach" : ""}">${s.finished ? "" : myTurn ? (settings.hints ? coachText(me) : L("Your turn: tap a goat above to bet, or choose an action", "Jouw beurt: tik op een geit om te gokken, of kies een actie")) : `<span class="turnb">${avatarSvg(seats[s.turn].avatar, 24)}<b>${esc(seats[s.turn].name)}</b> ${L("is thinking…", "denkt na…")}</span>`}</div>
     <button class="abtn run" id="aRun" ${myTurn ? "" : "disabled"}><span class="ic">🏃</span>${L("Run", "Ren")}${sub(L("roll the next goat", "gooi voor de volgende geit"))}</button>
     <button class="abtn trick" id="aTrick" ${canTrick ? "" : "disabled"}><span class="ic">🃏</span>${L("Trick", "Pestkaart")} (${me.hand.length})${sub(L("play a card", "speel een kaart"))}</button>
-    <button class="abtn scout" id="aScout" ${canScout ? "" : "disabled"}><span class="ic">👀</span>${L("Scout", "Spieden")}${sub(L("peek next goat", "gluur naar de volgende"))}</button>
+    <button class="abtn scout" id="aScout" ${canScout ? "" : "disabled"}><span class="ic">👀</span>${L("Scout", "Gluren")}${sub(L("free peek, then act again", "gratis gluren, daarna nog een actie"))}</button>
     <button class="abtn final" id="aFinal" ${canFinal ? "" : "disabled"}><span class="ic">🎯</span>${L("Pledge", "Topgok")} (${me.finalsLeft.length})${sub(L("bet on the winner", "gok op de winnaar"))}</button>`;
   $("aRun").onclick = () => submit({ type: "run" });
   $("aScout").onclick = () => submit({ type: "scout" });
@@ -363,7 +363,7 @@ function pickTrickTarget(card) {
     }));
     return wire(p);
   }
-  const labels = { headbutt: L("Pick the goat that gets pushed down (it swaps with the goat beneath it):", "Kies de geit die naar beneden wordt gestoten (hij wisselt met de geit eronder):"), wobble: L("Pick the stack's top goat to fall one space back:", "Kies de bovenste geit van de stapel die een vakje terugvalt:"), snack: L("Who gets the snack (+1)?", "Wie krijgt het hapje (+1)?"), mudslide: L("Whose run gets halved?", "Wiens ren wordt gehalveerd?"), earplugs: L("Who ignores the Ram this stage?", "Wie trekt zich niets aan van de Ram?") };
+  const labels = { headbutt: L("Pick the goat that gets pushed down (it swaps with the goat beneath it):", "Kies de geit die naar beneden wordt gestoten (hij wisselt met de geit eronder):"), wobble: L("Pick the stack's top goat to fall one space back:", "Kies de bovenste geit van de stapel die een vakje terugvalt:"), snack: L("Who gets the snack (+1)?", "Wie krijgt het hapje (+1)?"), mudslide: L("Whose run gets halved?", "Wiens ren wordt gehalveerd?"), earplugs: L("Who does not skip a run at the Ram this stage?", "Wie slaat bij de Ram deze etappe geen ren over?") };
   const extra = (g) => {
     if (card !== "headbutt") return "";
     const arr = s.spaces[goatSpace(s, g)];
@@ -429,9 +429,9 @@ function openHelp() {
   <p>Every goat runs exactly once per stage, in random order. On your turn do <b>one</b> thing:</p>
   <div class="tlist">
    <div class="tl"><span class="e">🪙</span><span><b>Leg bet</b>: tap a goat's token (6, then 4, then 2). Leader at stage end pays the token, 2nd place pays 1, otherwise you lose 1.</span></div>
-   <div class="tl"><span class="e">🏃</span><span><b>Run</b>: flip the next Herd card and move that goat with its own die. You earn a hoof token: +1 hay at stage end.</span></div>
+   <div class="tl"><span class="e">🏃</span><span><b>Run</b>: flip the next Herd card and move that goat with its own die. You earn a hoof token: +${c.hoofHay} hay at stage end.</span></div>
    <div class="tl"><span class="e">🃏</span><span><b>Trick</b>: play a card to meddle (see the cards when you open it).</span></div>
-   <div class="tl"><span class="e">👀</span><span><b>Scout</b>: secretly peek at which goat runs next.</span></div>
+   <div class="tl"><span class="e">👀</span><span><b>Scout</b>: secretly peek at which goat runs next. It is free: you stay on turn.</span></div>
    <div class="tl"><span class="e">🎯</span><span><b>Summit pledge</b>: secretly pledge a goat as the overall winner and another as the loser (once each per game). A correct pledge pays ${c.pledgeValues.join("/")} depending on the stage you made it, so early is worth more; wrong costs ${c.finalPenalty}.</span></div>
   </div>
   <h3>The goats' dice</h3>`, `
@@ -443,9 +443,9 @@ function openHelp() {
   <p>Elke geit rent precies één keer per etappe, in willekeurige volgorde. Op jouw beurt doe je <b>één</b> ding:</p>
   <div class="tlist">
    <div class="tl"><span class="e">🪙</span><span><b>Etappegok</b>: tik op het token van een geit (eerst 6, dan 4, dan 2). De koploper aan het eind van de etappe betaalt het token uit, nummer 2 levert 1 op, anders verlies je 1.</span></div>
-   <div class="tl"><span class="e">🏃</span><span><b>Ren</b>: draai de volgende kudde-kaart om en verplaats die geit met zijn eigen dobbelsteen. Je krijgt een hoeftoken: +1 hooi aan het eind van de etappe.</span></div>
+   <div class="tl"><span class="e">🏃</span><span><b>Ren</b>: draai de volgende kudde-kaart om en verplaats die geit met zijn eigen dobbelsteen. Je krijgt een hoeftoken: +${c.hoofHay} hooi aan het eind van de etappe.</span></div>
    <div class="tl"><span class="e">🃏</span><span><b>Pestkaart</b>: speel een kaart om te dwarsbomen (je ziet de kaarten als je ze opent).</span></div>
-   <div class="tl"><span class="e">👀</span><span><b>Spieden</b>: gluur in het geheim welke geit als volgende rent.</span></div>
+   <div class="tl"><span class="e">👀</span><span><b>Gluren</b>: gluur in het geheim welke geit als volgende rent. Het is gratis: je blijft aan de beurt.</span></div>
    <div class="tl"><span class="e">🎯</span><span><b>Topgok</b>: gok in het geheim op één winnaar en één laatste (elk één keer per spel). Goed gokken levert ${c.pledgeValues.join("/")} op, afhankelijk van de etappe waarin je gokte, dus vroeg is meer waard; fout kost ${c.finalPenalty}.</span></div>
   </div>
   <h3>De dobbelstenen van de geiten</h3>`);
@@ -627,7 +627,7 @@ async function playTurn(myGen) {
     $("toast").querySelectorAll(".tst:not(.keep)").forEach((t) => t.remove()); // drop the previous player's message so it is clear whose turn this is
     const t0 = performance.now();
     act = await botDecide(pi);
-    await new Promise((r) => setTimeout(r, Math.max(0, 1100 * mult() - (performance.now() - t0))));
+    if (act.type !== "scout") await new Promise((r) => setTimeout(r, Math.max(0, 1100 * mult() - (performance.now() - t0))));
   }
   if (myGen !== gen) return false;
   const before = s.players.map((p) => ({ legs: p.legs.map((l) => ({ ...l })), hoofs: p.hoofs, cheers: p.cheers.map((c) => ({ ...c })), hay: p.hay }));
@@ -637,6 +637,8 @@ async function playTurn(myGen) {
   const head = events[0];
   const text = describe(head, pi);
   log(text);
+  // A bot's free peek is silent: the hidden card is nobody else's business and it is straight back to the same player.
+  if (act.type === "scout" && !seats[pi].human) return true;
   toast(`${avatarSvg(seats[pi].avatar, 28)}<span>${esc(text)} ${actionIcon(act)}</span>`, 2200);
   if (settings.hints && seats[pi].human && (act.type === "scout" || (act.type === "trick" && act.card === "whistle" && !act.args.bury))) {
     toast(`<span>${L(`👀 You peeked: <b>${gName(s.players[pi].knownTop)}</b> runs next. Only you know, shown as the glowing card in the top bar. Bet on it, or Run to move it.`, `👀 Je gluurde: <b>${gName(s.players[pi].knownTop)}</b> rent als volgende. Alleen jij weet het, zie de gloeiende kaart bovenin. Gok erop, of Ren om hem te verplaatsen.`)}</span>`, 6000, true);

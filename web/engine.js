@@ -12,7 +12,7 @@ export const GOATS = {
 export const TRICK_COPIES = { headbutt: 3, snack: 3, mudslide: 2, wobble: 3, swap: 2, earplugs: 2, whistle: 2, cheer: 3 };
 export const DEFAULT_CONFIG = {
   finish: 20, mud: [6, 8], ram: 17, startHay: 3,
-  legValues: [6, 4, 2], pledgeValues: [10, 8, 7, 6, 5, 4], hoofHay: 1,
+  legValues: [6, 4, 2], pledgeValues: [10, 8, 7, 6, 5, 4], hoofHay: 2,
   startHand: 3, handMax: 4, mudHalves: true, ramCrossOnly: true, ramOnce: true, finalPenalty: 3, cheerHay: 2,
 };
 
@@ -78,14 +78,16 @@ export function moveGoat(b, goat, roll) {
   const dest = from + steps;
   const ev = { goat, roll, steps, from, to: dest, slowed, carried: carried.slice(1), ram: false, finished: false };
 
-  if (!b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly) && !b.ears[goat]) {
+  if (!b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly)) {
     // Love at first sight: the whole moving stack stops on the Ram's space, and its top goat is so smitten
     // that it skips its own next run.
     b.ramUsed = true;
     ev.ram = true;
     ev.to = b.cfg.ram;
     ev.smitten = carried.at(-1);
-    (b.skips ||= {})[ev.smitten] = true;
+    // Earplugs on the top goat: the stack still stops, but that goat does not lose its next run.
+    if (b.ears[ev.smitten]) ev.deaf = true;
+    else (b.skips ||= {})[ev.smitten] = true;
     stackAt(b, b.cfg.ram).push(...carried);
   } else {
     stackAt(b, dest).push(...carried);
@@ -182,6 +184,8 @@ export function newGame({ players = 4, seed = 1, cfg = {} } = {}) {
   }
   for (const p of s.players) for (let i = 0; i < c.startHand; i++) drawTrick(s, p);
   startStage(s);
+  // Random starting player, so nobody owns the first-mover edge.
+  s.turn = randInt(s, players);
   return s;
 }
 
@@ -238,10 +242,13 @@ export function pledgeValue(s) {
 function scoreFinal(s) {
   const rank = ranking(s);
   s.stats.preFinal = s.players.map((q) => q.hay);
+  // Sum each player's pledges first, then clamp at 0 once (placement order must not change the result).
+  const delta = s.players.map(() => 0);
   for (const bet of s.finalBets) {
     const target = bet.kind === "winner" ? rank[0] : rank.at(-1);
-    pay(s.players[bet.player], bet.goat === target ? bet.value : -s.cfg.finalPenalty, "final");
+    delta[bet.player] += bet.goat === target ? bet.value : -s.cfg.finalPenalty;
   }
+  s.players.forEach((p, i) => pay(p, delta[i], "final"));
 }
 
 // ---- actions ----
@@ -286,7 +293,10 @@ export function apply(s, act) {
       }
       break;
     }
-    case "scout": p.knownTop = s.deck[0]; break;
+    case "scout":
+      // Peeking is free: you look and are straight away on turn again (you may only hold one peek at a time).
+      p.knownTop = s.deck[0];
+      return events;
     case "final": {
       p.finalsLeft.splice(p.finalsLeft.indexOf(act.kind), 1);
       s.finalBets.push({ player: pi, goat: act.goat, kind: act.kind, value: pledgeValue(s), stage: s.stage });

@@ -24,6 +24,7 @@ function cfgFromArgs() {
   if (args.pledges) c.pledgeValues = list("pledges");
   if (args.penalty) c.finalPenalty = num("penalty");
   if (args.legs) c.legValues = list("legs");
+  if (args.hoof) c.hoofHay = num("hoof");
   if (args.cheer) c.cheerHay = num("cheer");
   if (args.ramonce !== undefined) c.ramOnce = num("ramonce") === 1;
   if (args.ramcross !== undefined) c.ramCrossOnly = num("ramcross") === 1;
