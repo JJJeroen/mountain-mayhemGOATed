@@ -8,7 +8,7 @@ const GOAT_ART = {
   blue:   { main: "#4f95e8", dark: "#2f6fc0", light: "#cfe5ff", horn: "#f3e6c4" },
   yellow: { main: "#f7c52b", dark: "#d89a0c", light: "#fff0a8", horn: "#fff4d8" },
   green:  { main: "#58b868", dark: "#388a48", light: "#d3f2d3", horn: "#efe3bf" },
-  orange: { main: "#f5882d", dark: "#d0621a", light: "#ffd9a8", horn: "#fff0cf" },
+  orange: { main: "#e8412c", dark: "#b02a1a", light: "#ffc4b8", horn: "#fff0cf" },
   white:  { main: "#f8f4ee", dark: "#d6cdc2", light: "#ffffff", horn: "#f0d9b5" },
 };
 
@@ -220,9 +220,9 @@ export function avatarSvg(i = 0, size = 80) {
 }
 
 export const GOAT_BLURB = {
-  blue: "Mudlark: mud? what mud. Wears wellies.",
-  yellow: "Sprinter: all gas, no brakes, buck teeth.",
-  green: "Steady: reads the paper, never rushes.",
-  orange: "Leaper: springs on the hooves, eyes on vacation.",
-  white: "Diva: sunglasses indoors, outdoors, always.",
+  blue: "Vincent van Goat: mud? what mud. Wears wellies.",
+  yellow: "Goatzilla: all gas, no brakes, buck teeth.",
+  green: "Nanny McBleat: reads the paper, never rushes.",
+  orange: "ChewBAAAcca: springs on the hooves, eyes on vacation.",
+  white: "Goaty Perry: sunglasses indoors, outdoors, always.",
 };

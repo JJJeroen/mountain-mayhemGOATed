@@ -9,7 +9,7 @@ Target: **phone-friendly web page**, **1 human vs AI** first. Later a quick part
 
 > **Seats (updated 2026-10-13):** "3 players" was ambiguous, so the start screen offers 1 human + 2 or 3 AI (3 or 4 seats). Both are now simulated (`node sim.js --quick --players 3`); 2 seats also work. Balance is similar across seat counts, but mean hay rises as seats drop (25 / 32 / 46 for 4 / 3 / 2 seats).
 
-> **Newer than this document (2026-10-13):** final bets were replaced by **Summit Pledges** (one Winner + one Loser per player, payout 10/8/7/6/5/4 by stage placed, wrong -2). Read RULES.md v0.3 for the current rules; sections 3-4 below describe the older final-bet economy.
+> **Newer than this document (2026-10-13):** final bets were replaced by **Summit Pledges** (one Winner + one Loser per player, payout 10/8/7/6/5/4 by stage placed, wrong -3). Read RULES.md v0.3 for the current rules; sections 3-4 below describe the older final-bet economy.
 
 ## 2. How we got here (conversation summary)
 1. User shared a YouTube video (channel "Count Grey Matter", "Is Anyone Home Inside an AI?"). It could not be fetched; the description gave no production details. User's actual goal: make a similar pixel-art explainer.
@@ -24,7 +24,7 @@ Target: **phone-friendly web page**, **1 human vs AI** first. Later a quick part
 - 20-space track + finish. Mud spaces 6-8 (halves roll rounded up, Mudlark ignores). Ram at space 17.
 - 5 goats, each with its own die (avg 2): Blue Mudlark `1 2 2 2 2 3` (ignores mud), Yellow Sprinter `1 1 1 3 3 3`, Green Steady `2 2 2 2 1 3`, Orange Leaper `0 1 2 2 3 4`, White Diva `1 1 2 2 3 3`.
 - Stage = 5 Herd cards, each goat moves exactly once. Turn = one of 5 actions: **Leg bet** (tokens 6/4/2 per goat, second place +1, wrong -1), **Play a trick**, **Run** (flip Herd card, roll that goat's die, +1 hoof token = +1 hay at stage end), **Scout**, **Final bet** (face-down Winner/Loser token, can't be taken back).
-- Ram: first goat in a stage to end a move on/past space 17 goes under the last-place goat; its riders stay. Resets each stage. Earplugs trick makes a goat ignore it.
+- Ram: first goat in a stage to end a move on/past space 17 goes under the last-place goat; its riders stay. Once per race (ramOnce). Earplugs trick makes a goat ignore it.
 - Final scoring: correct final bets in placement order pay **12, 8, 5, 3, then 1**; wrong costs 1. Most hay wins. Start: 3 hay, 3 trick cards (draw 1 per stage, hand max 4).
 - Tricks (8 types, 20 cards): Headbutt x3, Snack x3, Mud Slide x2, Wobble x3, Swap Places x2, Earplugs x2, **Whistle x2**, Cheer x3 (+2 hay if goat still leads).
 

@@ -3,17 +3,17 @@
 
 export const GOAT_IDS = ["blue", "yellow", "green", "orange", "white"];
 export const GOATS = {
-  blue: { name: "Mudlark", die: [1, 2, 2, 2, 2, 3], mudImmune: true },
-  yellow: { name: "Sprinter", die: [1, 1, 1, 3, 3, 3] },
-  green: { name: "Steady", die: [2, 2, 2, 2, 1, 3] },
-  orange: { name: "Leaper", die: [0, 1, 2, 2, 3, 4] },
-  white: { name: "Diva", die: [1, 1, 2, 2, 3, 3] },
+  blue: { name: "Vincent van Goat", die: [1, 2, 2, 2, 2, 3], mudImmune: true },
+  yellow: { name: "Goatzilla", die: [1, 1, 1, 3, 3, 3] },
+  green: { name: "Nanny McBleat", die: [2, 2, 2, 2, 1, 3] },
+  orange: { name: "ChewBAAAcca", die: [0, 1, 2, 2, 3, 4] },
+  white: { name: "Goaty Perry", die: [1, 1, 2, 2, 3, 3] },
 };
 export const TRICK_COPIES = { headbutt: 3, snack: 3, mudslide: 2, wobble: 3, swap: 2, earplugs: 2, whistle: 2, cheer: 3 };
 export const DEFAULT_CONFIG = {
   finish: 20, mud: [6, 8], ram: 17, startHay: 3,
-  legValues: [6, 4, 2], pledgeValues: [10, 8, 7, 6, 5, 4], hoofHay: 1,
-  startHand: 3, handMax: 4, mudHalves: true, ramCrossOnly: true, finalPenalty: 2, cheerHay: 2,
+  legValues: [6, 4, 2], pledgeValues: [10, 8, 7, 6, 5, 4], hoofHay: 2, loserDrop: 3,
+  startHand: 3, handMax: 4, mudHalves: true, ramCrossOnly: true, ramOnce: true, finalPenalty: 3, cheerHay: 2,
 };
 
 // ---- seeded rng (state kept in o.rng so a board can be cloned and replayed) ----
@@ -38,7 +38,7 @@ export function cloneBoard(s) {
   const spaces = {};
   for (const k in s.spaces) spaces[k] = s.spaces[k].slice();
   return { ...s, spaces, deck: s.deck.slice(), played: s.played.slice(),
-    boosts: { ...s.boosts }, slows: { ...s.slows }, ears: { ...s.ears } };
+    boosts: { ...s.boosts }, slows: { ...s.slows }, ears: { ...s.ears }, skips: { ...s.skips } };
 }
 
 /** Goats from first place to last: furthest space first, top of a stack first. */
@@ -61,6 +61,11 @@ function inMud(b, sp) {
 /** Move a goat (carrying everyone above it). Returns an event describing what happened. */
 export function moveGoat(b, goat, roll) {
   const from = goatSpace(b, goat);
+  // A goat that fell for the Ram sits out its next run (the card is still played).
+  if (b.skips?.[goat]) {
+    delete b.skips[goat];
+    return { goat, roll, steps: 0, from, to: from, slowed: false, carried: [], ram: false, skipped: true, finished: false };
+  }
   let steps = roll;
   const muddy = inMud(b, from) && !GOATS[goat].mudImmune;
   const slowed = muddy || !!b.slows[goat];
@@ -73,15 +78,17 @@ export function moveGoat(b, goat, roll) {
   const dest = from + steps;
   const ev = { goat, roll, steps, from, to: dest, slowed, carried: carried.slice(1), ram: false, finished: false };
 
-  if (!b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly) && !b.ears[goat]) {
-    // The goat falls in love: riders stay on the landing space, the goat goes under the last goat.
+  if (!b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly)) {
+    // Love at first sight: the whole moving stack stops on the Ram's space, and its top goat is so smitten
+    // that it skips its own next run.
     b.ramUsed = true;
     ev.ram = true;
-    if (carried.length > 1) stackAt(b, dest).push(...carried.slice(1));
-    const last = ranking(b).at(-1);
-    if (last) b.spaces[goatSpace(b, last)].unshift(goat);
-    else stackAt(b, dest).push(goat);
-    ev.to = goatSpace(b, goat);
+    ev.to = b.cfg.ram;
+    ev.smitten = carried.at(-1);
+    // Earplugs on the top goat: the stack still stops, but that goat does not lose its next run.
+    if (b.ears[ev.smitten]) ev.deaf = true;
+    else (b.skips ||= {})[ev.smitten] = true;
+    stackAt(b, b.cfg.ram).push(...carried);
   } else {
     stackAt(b, dest).push(...carried);
   }
@@ -95,7 +102,7 @@ export function moveGoat(b, goat, roll) {
 export function resetStageBoard(b) {
   b.deck = shuffle(b, [...GOAT_IDS]);
   b.played = [];
-  b.ramUsed = false;
+  if (!b.cfg.ramOnce) b.ramUsed = false;
   b.boosts = {};
   b.slows = {};
   b.ears = {};
@@ -162,7 +169,7 @@ export function newGame({ players = 4, seed = 1, cfg = {} } = {}) {
   const c = { ...DEFAULT_CONFIG, ...cfg };
   const s = {
     cfg: c, rng: seed | 0, nPlayers: players, spaces: {}, deck: [], played: [], ramUsed: false,
-    boosts: {}, slows: {}, ears: {}, finished: false, legStacks: {}, finalBets: [], trickDeck: [],
+    boosts: {}, slows: {}, ears: {}, skips: {}, finished: false, legStacks: {}, finalBets: [], trickDeck: [],
     discard: [], turn: 0, stage: 0, players: [],
     stats: { actions: {}, tricks: {}, ramTriggers: 0, stages: 0, runs: 0, mudSlowed: 0, leadChanges: 0, history: [], preFinal: null },
   };
@@ -177,6 +184,8 @@ export function newGame({ players = 4, seed = 1, cfg = {} } = {}) {
   }
   for (const p of s.players) for (let i = 0; i < c.startHand; i++) drawTrick(s, p);
   startStage(s);
+  // Random starting player, so nobody owns the first-mover edge.
+  s.turn = randInt(s, players);
   return s;
 }
 
@@ -225,18 +234,23 @@ function scoreStage(s) {
 }
 
 /** Hay a Summit Pledge placed right now would pay if correct: it shrinks as the race goes on. */
-export function pledgeValue(s) {
+export function pledgeValue(s, kind = "winner") {
   const v = s.cfg.pledgeValues;
-  return v[Math.min(s.stage - 1, v.length - 1)];
+  const base = v[Math.min(s.stage - 1, v.length - 1)];
+  // Guessing the last goat is easier than guessing the winner (one goat finishes last far more predictably), so it pays less.
+  return kind === "loser" ? Math.max(2, base - s.cfg.loserDrop) : base;
 }
 
 function scoreFinal(s) {
   const rank = ranking(s);
   s.stats.preFinal = s.players.map((q) => q.hay);
+  // Sum each player's pledges first, then clamp at 0 once (placement order must not change the result).
+  const delta = s.players.map(() => 0);
   for (const bet of s.finalBets) {
     const target = bet.kind === "winner" ? rank[0] : rank.at(-1);
-    pay(s.players[bet.player], bet.goat === target ? bet.value : -s.cfg.finalPenalty, "final");
+    delta[bet.player] += bet.goat === target ? bet.value : -s.cfg.finalPenalty;
   }
+  s.players.forEach((p, i) => pay(p, delta[i], "final"));
 }
 
 // ---- actions ----
@@ -281,10 +295,13 @@ export function apply(s, act) {
       }
       break;
     }
-    case "scout": p.knownTop = s.deck[0]; break;
+    case "scout":
+      // Peeking is free: you look and are straight away on turn again (you may only hold one peek at a time).
+      p.knownTop = s.deck[0];
+      return events;
     case "final": {
       p.finalsLeft.splice(p.finalsLeft.indexOf(act.kind), 1);
-      s.finalBets.push({ player: pi, goat: act.goat, kind: act.kind, value: pledgeValue(s) });
+      s.finalBets.push({ player: pi, goat: act.goat, kind: act.kind, value: pledgeValue(s, act.kind), stage: s.stage });
       break;
     }
     case "run": {
