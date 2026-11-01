@@ -12,7 +12,7 @@ export const GOATS = {
 export const TRICK_COPIES = { headbutt: 3, snack: 3, mudslide: 2, wobble: 3, swap: 2, earplugs: 2, whistle: 2, cheer: 3 };
 export const DEFAULT_CONFIG = {
   finish: 20, mud: [6, 8], ram: 17, startHay: 3,
-  legValues: [6, 4, 2], pledgeValues: [10, 8, 7, 6, 5, 4], hoofHay: 2,
+  legValues: [6, 4, 2], pledgeValues: [10, 8, 7, 6, 5, 4], hoofHay: 2, loserDrop: 3,
   startHand: 3, handMax: 4, mudHalves: true, ramCrossOnly: true, ramOnce: true, finalPenalty: 3, cheerHay: 2,
 };
 
@@ -234,9 +234,11 @@ function scoreStage(s) {
 }
 
 /** Hay a Summit Pledge placed right now would pay if correct: it shrinks as the race goes on. */
-export function pledgeValue(s) {
+export function pledgeValue(s, kind = "winner") {
   const v = s.cfg.pledgeValues;
-  return v[Math.min(s.stage - 1, v.length - 1)];
+  const base = v[Math.min(s.stage - 1, v.length - 1)];
+  // Guessing the last goat is easier than guessing the winner (one goat finishes last far more predictably), so it pays less.
+  return kind === "loser" ? Math.max(2, base - s.cfg.loserDrop) : base;
 }
 
 function scoreFinal(s) {
@@ -299,7 +301,7 @@ export function apply(s, act) {
       return events;
     case "final": {
       p.finalsLeft.splice(p.finalsLeft.indexOf(act.kind), 1);
-      s.finalBets.push({ player: pi, goat: act.goat, kind: act.kind, value: pledgeValue(s), stage: s.stage });
+      s.finalBets.push({ player: pi, goat: act.goat, kind: act.kind, value: pledgeValue(s, act.kind), stage: s.stage });
       break;
     }
     case "run": {

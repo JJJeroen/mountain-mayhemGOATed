@@ -400,8 +400,8 @@ function openFinal() {
   const draw = () => {
     const goats = legalActions(s, 0).filter((a) => a.type === "final" && a.kind === kind).map((a) => a.goat);
     const placed = mine.length ? `<h3>${L("Your secret pledges", "Jouw geheime topgokken")}</h3><div class="row">${mine.map((b) => `<span class="pill" style="opacity:1">${b.kind === "winner" ? "🏆" : "🐌"} ${goatSvg(b.goat, "neutral", { size: 22 })} ${gName(b.goat)} <small>(${b.value})</small></span>`).join("")}</div>` : "";
-    const p = openSheet(`<h2>🎯 ${L("Summit pledge", "Topgok")}</h2><p>${L(`Secretly pledge who wins or loses the whole race. You get <b>one Winner and one Loser pledge</b> per game and <b>it can never be taken back</b>. Pledging now pays <b>${pledgeValue(s)} hay</b> if right (it shrinks every stage: ${s.cfg.pledgeValues.join(" / ")}); wrong costs ${s.cfg.finalPenalty}.`,
-        `Gok in het geheim wie de hele race wint of als laatste eindigt. Je hebt per spel <b>één Winnaar- en één Verliezer-gok</b> en <b>je kunt hem nooit meer terugnemen</b>. Nu gokken levert <b>${pledgeValue(s)} hooi</b> op als je gelijk hebt (het wordt elke etappe minder: ${s.cfg.pledgeValues.join(" / ")}); fout kost ${s.cfg.finalPenalty}.`)}</p>
+    const p = openSheet(`<h2>🎯 ${L("Summit pledge", "Topgok")}</h2><p>${L(`Secretly pledge who wins or loses the whole race. You get <b>one Winner and one Loser pledge</b> per game and <b>it can never be taken back</b>. Pledging now pays <b>${pledgeValue(s, kind)} hay</b> if right (it shrinks every stage: ${s.cfg.pledgeValues.join(" / ")}); wrong costs ${s.cfg.finalPenalty}. Picking the loser is easier, so it pays ${s.cfg.loserDrop} less than picking the winner.`,
+        `Gok in het geheim wie de hele race wint of als laatste eindigt. Je hebt per spel <b>één Winnaar- en één Verliezer-gok</b> en <b>je kunt hem nooit meer terugnemen</b>. Nu gokken levert <b>${pledgeValue(s, kind)} hooi</b> op als je gelijk hebt (het wordt elke etappe minder: ${s.cfg.pledgeValues.join(" / ")}); fout kost ${s.cfg.finalPenalty}. De laatste kiezen is makkelijker, dus dat levert ${s.cfg.loserDrop} minder op dan de winnaar kiezen.`)}</p>
       <div class="seg" id="seg">${me.finalsLeft.map((k) => `<button data-k="${k}" class="${kind === k ? "on" : ""}">${k === "winner" ? L("🏆 Winner", "🏆 Winnaar") : L("🐌 Loser", "🐌 Verliezer")}</button>`).join("")}</div>
       <div class="grid g3" style="margin-top:10px">${goats.map((g) => goatPickCard(g)).join("")}</div>${placed}`);
     p.querySelectorAll("#seg button").forEach((b) => (b.onclick = () => { kind = b.dataset.k; draw(); }));
@@ -451,7 +451,7 @@ function openHelp() {
    <div class="tl"><span class="e">🏃</span><span><b>Run</b>: flip the next Herd card and move that goat with its own die. You earn a hoof token: +${c.hoofHay} hay at stage end.</span></div>
    <div class="tl"><span class="e">🃏</span><span><b>Trick</b>: play a card to meddle (see the cards when you open it).</span></div>
    <div class="tl"><span class="e">👀</span><span><b>Scout</b>: secretly peek at which goat runs next. It is free: you stay on turn.</span></div>
-   <div class="tl"><span class="e">🎯</span><span><b>Summit pledge</b>: secretly pledge a goat as the overall winner and another as the loser (once each per game). A correct pledge pays ${c.pledgeValues.join("/")} depending on the stage you made it, so early is worth more; wrong costs ${c.finalPenalty}.</span></div>
+   <div class="tl"><span class="e">🎯</span><span><b>Summit pledge</b>: secretly pledge a goat as the overall winner and another as the loser (once each per game). A correct pledge pays ${c.pledgeValues.join("/")} depending on the stage you made it, so early is worth more (picking the loser pays ${c.loserDrop} less); wrong costs ${c.finalPenalty}.</span></div>
   </div>
   <h3>The goats' dice</h3>`, `
   <h3>Het pad</h3>
@@ -465,7 +465,7 @@ function openHelp() {
    <div class="tl"><span class="e">🏃</span><span><b>Ren</b>: draai de volgende kudde-kaart om en verplaats die geit met zijn eigen dobbelsteen. Je krijgt een hoeftoken: +${c.hoofHay} hooi aan het eind van de etappe.</span></div>
    <div class="tl"><span class="e">🃏</span><span><b>Pestkaart</b>: speel een kaart om te dwarsbomen (je ziet de kaarten als je ze opent).</span></div>
    <div class="tl"><span class="e">👀</span><span><b>Gluren</b>: gluur in het geheim welke geit als volgende rent. Het is gratis: je blijft aan de beurt.</span></div>
-   <div class="tl"><span class="e">🎯</span><span><b>Topgok</b>: gok in het geheim op één winnaar en één laatste (elk één keer per spel). Goed gokken levert ${c.pledgeValues.join("/")} op, afhankelijk van de etappe waarin je gokte, dus vroeg is meer waard; fout kost ${c.finalPenalty}.</span></div>
+   <div class="tl"><span class="e">🎯</span><span><b>Topgok</b>: gok in het geheim op één winnaar en één laatste (elk één keer per spel). Goed gokken levert ${c.pledgeValues.join("/")} op, afhankelijk van de etappe waarin je gokte, dus vroeg is meer waard (de laatste kiezen levert ${c.loserDrop} minder op); fout kost ${c.finalPenalty}.</span></div>
   </div>
   <h3>De dobbelstenen van de geiten</h3>`);
   const end = L("The race ends when a goat crosses the finish line. Then the pledges are revealed.", "De race eindigt als een geit over de finishlijn gaat. Dan worden de topgokken onthuld.");

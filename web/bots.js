@@ -165,11 +165,10 @@ export function smartBot({ n = 24, nFinal = 16, nConfirm = 48, finalMargin = 0.5
           lose[r.at(-1)]++;
         }
       };
-      const value = pledgeValue(s);
       const pledges = legal.filter((a) => a.type === "final");
       const probOf = (a) => ((a.kind === "winner" ? win[a.goat] : lose[a.goat]) + 1) / (total + 5);
       const evOf = (a) => {
-        const prob = probOf(a);
+        const prob = probOf(a), value = pledgeValue(s, a.kind);
         return prob < minProb ? -Infinity : prob * value - (1 - prob) * s.cfg.finalPenalty - finalMargin;
       };
       playouts(nFinal);

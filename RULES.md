@@ -101,3 +101,6 @@ Most hay wins. **Tiebreak:** most correct pledges; still equal = shared win.
 - **Name/IP:** run trademark and store searches for "Mountain Mayhem" before branding (deferred by the owner).
 - **Hay inflation:** payouts could be scaled down; held back until a playtest shows whether it matters.
 - **Pledge ladder** (10/8/7/6/5/4, wrong -3) is untuned beyond the hedging test: check whether early pledges are too attractive.
+
+## Loser pledges pay less (2026-11-01)
+A correct **Loser** pledge pays **3 less** than a Winner pledge from the same stage (minimum 2): 7/5/4/3/2/2 against 10/8/7/6/5/4. Last place is far more predictable (red finishes last 26.6% of races, blue 13.3%), so a blind stage-1 Loser pledge was +EV in ~96% of games. At 7 it is about break-even blind (EV -0.05 best-of-five, -0.34 picking red), so only informed pledges pay. Shown in the pledge sheet and the help. Config: `loserDrop`.
