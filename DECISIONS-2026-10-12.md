@@ -39,3 +39,4 @@
 28. Pledges sum then clamp once. Easy's slips never pick blind pledges. Game state is saved after each move with a Continue button (no back-button plugin: a stray back press just resumes). Fredoka self-hosted, portrait locked.
 29. Still open (owner call): Loser pledge in stage 1 is +EV about 95% of games (red finishes last 26.6%, blue 13.3%).
 30. **Loser pledge pays 3 less than Winner** (owner OK 2026-11-01, wants the reason visible to players: it is in the pledge sheet and help). Measured: blind stage-1 Loser EV +0.83 -> -0.05; drop of 2 was not enough (+0.24). Bot stage-1 pledges 11-14% -> 7%; Hard vs 3x Normal still 37.3%.
+31. **Earplugs ignore the Ram for the top goat** (2026-11-01, playtest: a player gave the top goat earplugs and it still stopped and showed hearts). The stack walks past and the Ram is not used up, so he still catches a later goat (keeps the catch-up). Supersedes item 27. Revert = restore the `smitten`/`deaf` branch in moveGoat.

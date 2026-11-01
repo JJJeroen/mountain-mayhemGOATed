@@ -46,7 +46,7 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 | **Mud Slide** | Pick a goat that has not moved this stage: its run is **halved** (like mud), even outside mud. |
 | **Wobble** | The top goat of any stack with 2+ goats falls **one space back**. |
 | **Swap Places** | Two single goats (not stacked) trade spaces. |
-| **Earplugs** | Pick a goat: if it is the **top goat** of a stack the Ram stops, it does **not skip** its next run this stage (the stack still stops). |
+| **Earplugs** | Pick a goat: this stage it cannot hear the Ram. If it is the **top goat** of the stack that reaches him, the stack walks past and the Ram stays available. |
 | **Whistle** | Secretly look at the top Herd card, then keep it on top or **bury** it at the bottom of the deck. Others see you used it, not what you saw. |
 | **Cheer** | Pick a goat that leads: you earn **2 hay** at stage end if it still leads. |
 
@@ -57,7 +57,7 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 - Ranking: furthest space leads; within a stack, the goat on top leads.
 
 ## The Ram (once per race)
-The first goat of the whole race to **reach or pass** space 17 (start below it) falls head over hooves in love with the Ram and **stops on the Ram's space**; so does the whole stack it carries. The **top goat** of that stack is so dreamy that it **skips its next run** (its Herd card is still played, it just doesn't move): that is the date. Goats below it are not affected and carry it along if they move. After the date the Ram wanders off and every later goat walks straight past. Earplugs on the top goat spare it the skipped run.
+The first goat of the whole race to **reach or pass** space 17 (start below it) falls head over hooves in love with the Ram and **stops on the Ram's space**; so does the whole stack it carries. The **top goat** of that stack is so dreamy that it **skips its next run** (its Herd card is still played, it just doesn't move): that is the date. Goats below it are not affected and carry it along if they move. After the date the Ram wanders off and every later goat walks straight past. Earplugs on the **top goat** of the arriving stack: that goat cannot hear the Ram, so the whole stack walks straight past and the Ram keeps waiting for the next goat (he is not used up).
 
 ## End of a stage: scoring
 Based on the current ranking:

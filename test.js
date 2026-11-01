@@ -56,13 +56,20 @@ t("Ram: a lone goat that reaches it stops on it and skips its next run; later go
   assert.equal(moveGoat(b, "blue", 3).ram, false); // Ram already used this race
   assert.equal(moveGoat(b, "green", 2).skipped, true);
 });
-t("Earplugs on the top goat: the stack still stops, but nobody skips", () => {
+t("Earplugs on the top goat: the stack walks past the Ram and the Ram stays available", () => {
   const b = board({ 2: ["green"], 16: ["yellow", "white"] }, { ears: { white: true } });
   const e = moveGoat(b, "yellow", 2);
-  assert.equal(e.ram, true);
-  assert.equal(e.deaf, true);
-  assert.deepEqual(b.spaces[17], ["yellow", "white"]);
+  assert.equal(e.ram, false);
+  assert.equal(e.deafPass, "white");
+  assert.equal(b.ramUsed, false);
+  assert.deepEqual(b.spaces[18], ["yellow", "white"]);
   assert.equal(b.skips.white, undefined);
+});
+t("Earplugs on a goat that is not on top do nothing", () => {
+  const b = board({ 2: ["green"], 16: ["yellow", "white"] }, { ears: { yellow: true } });
+  const e = moveGoat(b, "yellow", 2);
+  assert.equal(e.ram, true);
+  assert.equal(e.smitten, "white");
 });
 t("crossing space 20 finishes the race", () => {
   const b = board({ 19: ["green"], 2: ["blue"] }, { ramUsed: true });

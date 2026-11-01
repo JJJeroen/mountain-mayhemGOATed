@@ -78,16 +78,18 @@ export function moveGoat(b, goat, roll) {
   const dest = from + steps;
   const ev = { goat, roll, steps, from, to: dest, slowed, carried: carried.slice(1), ram: false, finished: false };
 
-  if (!b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly)) {
+  const ramReached = !b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly);
+  // Earplugs: if the goat on top of the arriving stack cannot hear the Ram, the whole stack walks straight past
+  // and the Ram keeps waiting for the next goat.
+  if (ramReached && b.ears[carried.at(-1)]) ev.deafPass = carried.at(-1);
+  if (ramReached && !ev.deafPass) {
     // Love at first sight: the whole moving stack stops on the Ram's space, and its top goat is so smitten
     // that it skips its own next run.
     b.ramUsed = true;
     ev.ram = true;
     ev.to = b.cfg.ram;
     ev.smitten = carried.at(-1);
-    // Earplugs on the top goat: the stack still stops, but that goat does not lose its next run.
-    if (b.ears[ev.smitten]) ev.deaf = true;
-    else (b.skips ||= {})[ev.smitten] = true;
+    (b.skips ||= {})[ev.smitten] = true;
     stackAt(b, b.cfg.ram).push(...carried);
   } else {
     stackAt(b, dest).push(...carried);

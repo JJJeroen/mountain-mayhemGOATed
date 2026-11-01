@@ -26,7 +26,7 @@ const TRICKS = {
   mudslide: trick("🛝", ["Mud Slide", "Modderglijbaan"], ["A goat that hasn't run this stage has its run halved.", "Een geit die deze etappe nog niet gerend heeft, rent maar half zo ver."]),
   wobble: trick("🫨", ["Wobble", "Wankelen"], ["The top goat of a stack falls one space back.", "De bovenste geit van een stapel valt één vakje terug."]),
   swap: trick("🔀", ["Swap Places", "Plekwissel"], ["Two goats that stand alone trade spaces.", "Twee geiten die alleen staan, ruilen van vakje."]),
-  earplugs: trick("🎧", ["Earplugs", "Oordoppen"], ["This goat does not skip a run if the Ram stops its stack.", "Deze geit slaat geen ren over als de Ram zijn stapel tegenhoudt."]),
+  earplugs: trick("🎧", ["Earplugs", "Oordoppen"], ["This goat can't hear the Ram: if it is on top of a stack, the stack walks right past him.", "Deze geit hoort de Ram niet: zit hij bovenop een stapel, dan loopt de hele stapel langs de Ram."]),
   whistle: trick("📯", ["Whistle", "Fluitje"], ["Peek at the next Herd card, then keep it on top or bury it.", "Gluur naar de volgende kudde-kaart en laat hem bovenop of stop hem onderaan."]),
   cheer: trick("📣", ["Cheer", "Aanmoedigen"], ["Back the current leader: +2 hay at stage end if it still leads.", "Steun de koploper: +2 hooi aan het eind van de etappe als hij nog voorop ligt."]),
 };
@@ -389,7 +389,7 @@ function pickTrickTarget(card) {
     }));
     return wire(p);
   }
-  const labels = { headbutt: L("Pick the goat that gets pushed down (it swaps with the goat beneath it):", "Kies de geit die naar beneden wordt gestoten (hij wisselt met de geit eronder):"), wobble: L("Pick the stack's top goat to fall one space back:", "Kies de bovenste geit van de stapel die een vakje terugvalt:"), snack: L("Who gets the snack (+1)?", "Wie krijgt het hapje (+1)?"), mudslide: L("Whose run gets halved?", "Wiens ren wordt gehalveerd?"), earplugs: L("Who does not skip a run at the Ram this stage?", "Wie slaat bij de Ram deze etappe geen ren over?") };
+  const labels = { headbutt: L("Pick the goat that gets pushed down (it swaps with the goat beneath it):", "Kies de geit die naar beneden wordt gestoten (hij wisselt met de geit eronder):"), wobble: L("Pick the stack's top goat to fall one space back:", "Kies de bovenste geit van de stapel die een vakje terugvalt:"), snack: L("Who gets the snack (+1)?", "Wie krijgt het hapje (+1)?"), mudslide: L("Whose run gets halved?", "Wiens ren wordt gehalveerd?"), earplugs: L("Who cannot hear the Ram this stage? (Works when it is on top of a stack.)", "Wie hoort de Ram deze etappe niet? (Werkt als hij bovenop een stapel zit.)") };
   const extra = (g) => {
     if (card !== "headbutt") return "";
     const arr = s.spaces[goatSpace(s, g)];
@@ -696,9 +696,9 @@ async function playTurnInner(myGen) {
         else await sleep(300);
         continue;
       }
-      setExpr(ev.goat, ev.ram && !ev.deaf ? "love" : "effort", ev.ram && !ev.deaf ? 2600 : 1400); // earplugs: no hearts
-      if (ev.ram && !ev.deaf) setExpr(ev.smitten, "love", 2600);
-      if (ev.ram && ev.deaf) burst(ev.smitten, "🎧");
+      setExpr(ev.goat, ev.ram ? "love" : "effort", ev.ram ? 2600 : 1400);
+      if (ev.ram) setExpr(ev.smitten, "love", 2600);
+      if (ev.deafPass) { burst(ev.deafPass, "🎧"); toast(`<span>🎧 ${L(`${gName(ev.deafPass)} could not hear the Ram (earplugs): the stack walks right past him!`, `${gName(ev.deafPass)} hoorde de Ram niet (oordoppen): de stapel loopt gewoon langs hem!`)}</span>`, 2600); log(L(`${gName(ev.deafPass)} ignored the Ram (earplugs)`, `${gName(ev.deafPass)} negeerde de Ram (oordoppen)`)); }
       hop(ev.goat);
       sfx(ev.slowed ? "mud" : "land");
       sfx(ev.slowed ? "annoyed" : "baa", ev.goat, 120);
@@ -711,11 +711,11 @@ async function playTurnInner(myGen) {
       if (myGen !== gen) return false;
       if (ev.ram) {
         $("ram").classList.remove("swoon"); void $("ram").offsetWidth; $("ram").classList.add("swoon");
-        toast(ev.deaf ? `<span>🎧 ${L(`${gName(ev.smitten)} fell for the Ram, but the earplugs help: the stack stops, nobody skips a run.`, `${gName(ev.smitten)} viel voor de Ram, maar de oordoppen helpen: de stapel stopt, niemand slaat een ren over.`)}</span>` : `<span>💘 ${L(`${gName(ev.smitten)} fell for the Ram! The stack stops here and ${gShort(ev.smitten)} skips its next run.`, `${gName(ev.smitten)} werd smoorverliefd op de Ram! De stapel stopt hier en ${gShort(ev.smitten)} slaat de volgende ren over.`)}</span>`, 2300);
-        log(ev.deaf ? L(`${gName(ev.smitten)} did not hear the Ram (earplugs) but the stack stops anyway`, `${gName(ev.smitten)} hoorde de Ram niet (oordoppen), maar de stapel stopt toch`) : L(`${gName(ev.smitten)} fell for the Ram`, `${gName(ev.smitten)} werd verliefd op de Ram`));
-        if (!ev.deaf) burst(ev.smitten, "💕");
+        toast(`<span>💘 ${L(`${gName(ev.smitten)} fell for the Ram! The stack stops here and ${gShort(ev.smitten)} skips its next run.`, `${gName(ev.smitten)} werd smoorverliefd op de Ram! De stapel stopt hier en ${gShort(ev.smitten)} slaat de volgende ren over.`)}</span>`, 2300);
+        log(L(`${gName(ev.smitten)} fell for the Ram`, `${gName(ev.smitten)} werd verliefd op de Ram`));
+        burst(ev.smitten, "💕");
         sfx("ram");
-        if (!ev.deaf) sfx("annoyed", ev.smitten, 700);
+        sfx("annoyed", ev.smitten, 700);
         await sleep(1500);
         if (myGen !== gen) return false;
       }
