@@ -78,17 +78,32 @@ export function moveGoat(b, goat, roll) {
   const dest = from + steps;
   const ev = { goat, roll, steps, from, to: dest, slowed, carried: carried.slice(1), ram: false, finished: false };
 
-  if (!b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly)) {
-    // Love at first sight: the whole moving stack stops on the Ram's space, and its top goat is so smitten
-    // that it skips its own next run.
+  const ramReached = !b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly);
+  const top = carried.at(-1);
+  // Earplugs on the top goat: the first goat below it that can hear the Ram falls in love instead.
+  // If nobody in the arriving stack can hear him, they all walk past and the Ram keeps waiting.
+  let smitten = top;
+  if (b.ears[top]) smitten = carried.slice(0, -1).reverse().find((g) => !b.ears[g]);
+  if (ramReached && !smitten) ev.deafPass = top;
+  if (ramReached && smitten) {
+    // Love at first sight: the smitten goat skips its own next run (the date).
     b.ramUsed = true;
     ev.ram = true;
-    ev.to = b.cfg.ram;
-    ev.smitten = carried.at(-1);
-    // Earplugs on the top goat: the stack still stops, but that goat does not lose its next run.
-    if (b.ears[ev.smitten]) ev.deaf = true;
-    else (b.skips ||= {})[ev.smitten] = true;
-    stackAt(b, b.cfg.ram).push(...carried);
+    ev.smitten = smitten;
+    if (smitten !== top) ev.deaf = top;
+    (b.skips ||= {})[smitten] = true;
+    if (ev.deaf && smitten !== goat) {
+      // The smitten goat steps off at the Ram; the goats under it walk on, still carrying the earplugged goats above it.
+      carried.splice(carried.indexOf(smitten), 1);
+      stackAt(b, b.cfg.ram).push(smitten);
+      stackAt(b, dest).push(...carried);
+      ev.dropped = true;
+      ev.carried = carried.slice(1);
+    } else {
+      // The whole stack stops on the Ram's space (the smitten goat is the one moving, so its riders stay too).
+      ev.to = b.cfg.ram;
+      stackAt(b, b.cfg.ram).push(...carried);
+    }
   } else {
     stackAt(b, dest).push(...carried);
   }
