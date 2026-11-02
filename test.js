@@ -64,6 +64,27 @@ t("Earplugs on the top goat: the stack still stops, but nobody skips", () => {
   assert.deepEqual(b.spaces[17], ["yellow", "white"]);
   assert.equal(b.skips.white, undefined);
 });
+t("stage summary breakdown adds up to each player's stage total (runs count as hay, last run included)", () => {
+  for (let seed = 1; seed <= 40; seed++) {
+    const s = newGame({ players: 3, seed });
+    let k = seed;
+    while (!s.finished) {
+      const stagesBefore = s.stats.history.length;
+      const acts = legalActions(s, s.turn).filter((a) => a.type !== "scout");
+      k = (k * 7 + 3) % 11; // a fixed mix of runs, leg bets, cheers and pledges
+      apply(s, k < 5 ? acts.find((a) => a.type === "run") || acts[0] : acts[k % acts.length]);
+      if (s.stats.history.length > stagesBefore) {
+        const h = s.stats.history.at(-1), prev = s.stats.history.at(-2);
+        h.breakdown.forEach((b, i) => {
+          assert.equal(b.hoofD, b.hoofs * s.cfg.hoofHay);
+          assert.equal(b.legs.reduce((a, l) => a + l.d, 0) + b.hoofD + b.cheers.reduce((a, c) => a + c.d, 0), b.net);
+          if (prev) assert.equal(h.hays[i] - prev.hays[i], b.net); // nothing else moves hay during a stage
+        });
+        if (!s.finished) assert.equal(h.breakdown.reduce((a, b) => a + b.hoofs, 0), 5); // all five runs of a full stage are counted
+      }
+    }
+  }
+});
 t("crossing space 20 finishes the race", () => {
   const b = board({ 19: ["green"], 2: ["blue"] }, { ramUsed: true });
   const e = moveGoat(b, "green", 2);
