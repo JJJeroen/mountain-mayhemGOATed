@@ -536,10 +536,13 @@ const seatLabel = (i) => (i === 0 ? L("You", "Jij") : seats[i].name);
 async function showStageScore(rank) {
   sfx("stage");
   // Everything comes from the engine's own stage score, so the pills always add up to the total.
-  const rows = s.stats.history.at(-1).breakdown.map((b) => {
+  const bd = s.stats.history.at(-1)?.breakdown;
+  if (!bd) return; // an old cached engine.js without breakdowns: skip the summary rather than crash
+  const rows = bd.map((b) => {
     const pills = b.legs.map((l) => ({ d: l.d, html: `${goatSvg(l.goat, "neutral", { size: 20 })} ${l.d > 0 ? "+" : ""}${l.d}` }));
     if (b.hoofs) pills.push({ d: b.hoofD, html: `👣 +${b.hoofD}` });
     for (const c of b.cheers) pills.push({ d: c.d, html: `📣 ${c.d ? "+" + c.d : "0"}` });
+    if (b.floor) pills.push({ d: b.floor, html: `🛟 +${b.floor} ${L("(hay never goes below 0)", "(hooi gaat nooit onder 0)")}` });
     return { pills, net: b.net };
   });
   const rk = rank.map((g, i) => `<div>${goatSvg(g, i === 0 ? "love" : "neutral", { size: 52 })}${ord(i)}</div>`).join("");

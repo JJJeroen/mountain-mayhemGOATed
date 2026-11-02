@@ -77,13 +77,29 @@ t("stage summary breakdown adds up to each player's stage total (runs count as h
         const h = s.stats.history.at(-1), prev = s.stats.history.at(-2);
         h.breakdown.forEach((b, i) => {
           assert.equal(b.hoofD, b.hoofs * s.cfg.hoofHay);
-          assert.equal(b.legs.reduce((a, l) => a + l.d, 0) + b.hoofD + b.cheers.reduce((a, c) => a + c.d, 0), b.net);
+          assert.equal(b.legs.reduce((a, l) => a + l.d, 0) + b.hoofD + b.cheers.reduce((a, c) => a + c.d, 0) + b.floor, b.net);
+          assert.ok(b.floor >= 0);
           if (prev) assert.equal(h.hays[i] - prev.hays[i], b.net); // nothing else moves hay during a stage
         });
         if (!s.finished) assert.equal(h.breakdown.reduce((a, b) => a + b.hoofs, 0), 5); // all five runs of a full stage are counted
       }
     }
   }
+});
+t("stage breakdown shows the 0-floor as its own amount", () => {
+  const s = newGame({ players: 3, seed: 3 });
+  // green leads, orange second; blue is so far behind that its last run cannot change that
+  s.spaces = { 1: ["blue"], 10: ["yellow"], 11: ["white"], 12: ["orange"], 13: ["green"] };
+  s.deck = ["blue"]; s.played = ["green", "orange", "white", "yellow"]; s.turn = 0;
+  s.players[0].hay = 1;
+  s.players[0].legs = ["white", "yellow", "white", "yellow", "blue"].map((goat) => ({ goat, value: 6 }));
+  apply(s, { type: "run" });
+  const b = s.stats.history.at(-1).breakdown[0];
+  const sum = b.legs.reduce((a, l) => a + l.d, 0) + b.hoofD; // -5 + 2
+  assert.equal(sum, -3);
+  assert.equal(s.stats.history.at(-1).hays[0], 0);
+  assert.equal(b.net, -1);
+  assert.equal(b.floor, 2);
 });
 t("crossing space 20 finishes the race", () => {
   const b = board({ 19: ["green"], 2: ["blue"] }, { ramUsed: true });

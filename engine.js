@@ -231,7 +231,8 @@ function scoreStage(s) {
     p.hay = Math.max(0, start + legD + hoofD + cheerD);
     p.src.leg += legD; p.src.hoof += hoofD; p.src.cheer += cheerD;
     // The stage summary shows exactly these numbers, so its pills always add up to the total.
-    breakdown.push({ legs, hoofs: p.hoofs, hoofD, cheers, net: p.hay - start });
+    // floor: hay that could not be lost because nobody drops below 0 (shown as its own pill).
+    breakdown.push({ legs, hoofs: p.hoofs, hoofD, cheers, floor: p.hay - start - (legD + hoofD + cheerD), net: p.hay - start });
   }
   s.stats.history.push({ stage: s.stage, hays: s.players.map((q) => q.hay), leader: rank[0], progress: Math.max(...Object.keys(s.spaces).map(Number)), breakdown });
 }
