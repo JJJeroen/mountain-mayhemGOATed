@@ -64,6 +64,17 @@ t("Earplugs on the top goat: the stack still stops, but nobody skips", () => {
   assert.deepEqual(b.spaces[17], ["yellow", "white"]);
   assert.equal(b.skips.white, undefined);
 });
+t("pest cards: 3 at the start, +1 each new stage up to 4, and the drawn card is recorded", () => {
+  const s = newGame({ players: 3, seed: 4 });
+  assert.ok(s.players.every((p) => p.hand.length === 3));
+  s.players[1].hand.push(s.trickDeck.pop()); // player 1 already holds 4
+  while (s.stage === 1) apply(s, { type: "run" });
+  const [a, b] = s.players;
+  assert.equal(a.hand.length, 4);
+  assert.equal(a.newTrick, a.hand.at(-1));
+  assert.equal(b.hand.length, 4);
+  assert.equal(b.newTrick, null);
+});
 t("crossing space 20 finishes the race", () => {
   const b = board({ 19: ["green"], 2: ["blue"] }, { ramUsed: true });
   const e = moveGoat(b, "green", 2);

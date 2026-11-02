@@ -1,6 +1,6 @@
 // Mountain Mayhem: GOATed - web UI. The engine decides rules; this file only renders and asks for actions.
 import {
-  GOAT_IDS, GOATS, newGame, legalActions, apply, ranking, goatSpace, trickOptions, pledgeValue, DEFAULT_CONFIG,
+  GOAT_IDS, GOATS, newGame, legalActions, apply, ranking, goatSpace, trickOptions, pledgeValue, DEFAULT_CONFIG, TRICK_COPIES,
 } from "./engine.js";
 import { sfx, setSoundEnabled, unlockAudio } from "./sound.js";
 import { goatSvg, ramSvg, avatarSvg, AVATARS, GOAT_BLURB } from "./art.js";
@@ -423,7 +423,7 @@ function openHelp() {
    <ol class="steps">
     <li><b>🪙 Bet:</b> grab a hay token on the goat you think leads when the stage ends. Right: 6, 4 or 2 hay (2nd place +1). Wrong: −1.</li>
     <li><b>🏃 Run:</b> flip a Herd card and that goat rolls its own dice. Goats that land on each other <b>stack up</b> and the bottom goat does the carrying. Mud halves your pace, and the lovesick <b>Ram</b> stops the first goat that reaches him, together with its whole stack: only the goat on top skips its next run.</li>
-    <li><b>🃏 Pest card:</b> play a nasty little trick: shove, swap, snack or slow a goat down, and more. Everybody sees it.</li>
+    <li><b>🃏 Pest card:</b> play a nasty little trick: shove, swap, snack or slow a goat down, and more. Everybody sees it. You start with 3; every new stage you get 1 more (max 4). Cards never expire.</li>
     <li><b>🎯 Summit pledge:</b> once per game, secretly bet on who wins (and who comes last). The earlier you dare, the more hay it pays.</li>
    </ol>
    <p>Every goat has its own die (tap a goat on the mountain to see it): some are steady, some wild. One action per turn. When all five goats have run, the stage is scored. First goat over the line ends the race!</p>
@@ -434,7 +434,7 @@ function openHelp() {
    <ol class="steps">
     <li><b>🪙 Etappe gokken:</b> pak een hooitoken op de geit waarvan jij denkt dat hij aan het eind van de etappe voorop ligt. Goed: 6, 4 of 2 hooi (2e plek +1). Fout: −1.</li>
     <li><b>🏃 Rennen:</b> draai een kudde-kaart om en die geit gooit zijn eigen dobbelsteen. Geiten die op elkaar landen <b>stapelen</b> zich op en de onderste geit draagt de rest. Modder halveert je tempo, en de smoorverliefde <b>Ram</b> houdt de eerste geit die hem bereikt tegen, samen met zijn hele stapel: alleen de bovenste geit slaat zijn volgende ren over.</li>
-    <li><b>🃏 Pestkaart:</b> Er zijn 8 soorten, zoals duwen, wisselen, extra hard rennen of een geit afremmen. </li>
+    <li><b>🃏 Pestkaart:</b> Er zijn 8 soorten, zoals duwen, wisselen, extra hard rennen of een geit afremmen. Je begint met 3; elke nieuwe etappe krijg je er 1 bij (max 4). Kaarten verlopen nooit.</li>
     <li><b>🎯 Topgokken:</b> één keer per spel gok je in het geheim wie wint (en wie laatste wordt). Hoe eerder je durft, hoe meer hooi het oplevert als je het goed hebt.</li>
    </ol>
    <p>Elke geit heeft zijn eigen dobbelsteen (tik op een geit op de berg om hem te zien): sommige zijn gelijkmatig, andere wild. Eén actie per beurt. Als alle vijf geiten gerend hebben, is de etappe klaar en worden de punten geteld. Loopt een geit tijdens het spel over de finish? Dan is de race meteen ten einde!</p>
@@ -471,7 +471,9 @@ function openHelp() {
   const end = L("The race ends when a goat crosses the finish line. Then the pledges are revealed.", "De race eindigt als een geit over de finishlijn gaat. Dan worden de topgokken onthuld.");
   openSheet(`<div class="rules">${quick}
   <details class="full"><summary>${L("📖 All the rules", "📖 Alle regels")}</summary>${full}
-  <h3>${L("Pest cards", "Pestkaarten")}</h3><ul>${Object.values(TRICKS).map((t) => `<li>${t.e} <b>${t.name}</b>: ${t.d}</li>`).join("")}</ul>
+  <h3>${L("Pest cards", "Pestkaarten")}</h3>
+  <p>${L(`Everyone starts with ${c.startHand} pest cards. At the start of every new stage you draw 1 more, unless you already hold ${c.handMax}. Cards never expire: keep them as long as you like. Which card you draw is luck: the deck holds ${Object.values(TRICK_COPIES).reduce((a, n) => a + n, 0)} cards (2 or 3 of each kind), and played cards are shuffled back in when it runs out.`,
+    `Iedereen begint met ${c.startHand} pestkaarten. Aan het begin van elke nieuwe etappe trek je er 1 bij, behalve als je er al ${c.handMax} hebt. Kaarten verlopen nooit: hou ze zo lang je wilt. Welke kaart je trekt is geluk: de stapel heeft ${Object.values(TRICK_COPIES).reduce((a, n) => a + n, 0)} kaarten (2 of 3 van elke soort), en gespeelde kaarten worden teruggeschud als hij op is.`)}</p><ul>${Object.values(TRICKS).map((t) => `<li>${t.e} <b>${t.name}</b>: ${t.d}</li>`).join("")}</ul>
   <div class="tlist">${GOAT_IDS.map((g) => `<div class="tl"><span>${goatSvg(g, "neutral", { size: 34 })}</span><span><b>${gName(g)}</b>: ${GOATS[g].die.join(" ")}<br><small>${blurb(g)}</small></span></div>`).join("")}</div>
   <p>${end}</p></details></div>
   <div class="center"><button class="btn go" id="hOk">${L("Got it", "Begrepen")}</button></div>`);
@@ -730,7 +732,10 @@ async function playTurnInner(myGen) {
     if (myGen !== gen) return false;
     if (ended) { saveGame(); await showFinal(s.stats.preFinal); return false; }
     renderGoats(); renderHud();
-    toast(`<span>🌄 ${L(`Stage ${s.stage} begins. New Herd deck shuffled!`, `Etappe ${s.stage} begint. Nieuwe kudde-stapel geschud!`)}</span>`, 1800);
+    const me = s.players[0], nt = TRICKS[me.newTrick];
+    const cardNote = nt ? L(` You get a pest card: ${nt.e} ${nt.name}.`, ` Je krijgt een pestkaart: ${nt.e} ${nt.name}.`)
+      : me.hand.length >= s.cfg.handMax ? L(` Your hand is full (${s.cfg.handMax}), so no new pest card.`, ` Je hand is vol (${s.cfg.handMax}), dus geen nieuwe pestkaart.`) : "";
+    toast(`<span>🌄 ${L(`Stage ${s.stage} begins. New Herd deck shuffled!`, `Etappe ${s.stage} begint. Nieuwe kudde-stapel geschud!`)}${cardNote}</span>`, cardNote ? 3500 : 1800, !!cardNote); // kept: the next bot turn would clear it at once
   }
   if (!seats[pi].human) await sleep(450);
   return !s.finished;
