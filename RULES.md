@@ -46,7 +46,7 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 | **Mud Slide** | Pick a goat that has not moved this stage: its run is **halved** (like mud), even outside mud. |
 | **Wobble** | The top goat of any stack with 2+ goats falls **one space back**. |
 | **Swap Places** | Two single goats (not stacked) trade spaces. |
-| **Earplugs** | Pick a goat: this stage it cannot hear the Ram. Only matters if it is the **top goat** arriving at the Ram: then the goat **right under it** falls in love instead (see The Ram). Alone, it walks past and the Ram stays available. |
+| **Earplugs** | Pick a goat: this stage it cannot hear the Ram. Only matters if it is the **top goat** arriving at the Ram: then the first goat **under it** that can hear falls in love instead (see The Ram). Alone, it walks past and the Ram stays available. |
 | **Whistle** | Secretly look at the top Herd card, then keep it on top or **bury** it at the bottom of the deck. Others see you used it, not what you saw. |
 | **Cheer** | Pick a goat that leads: you earn **2 hay** at stage end if it still leads. |
 
@@ -57,10 +57,10 @@ A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of
 - Ranking: furthest space leads; within a stack, the goat on top leads.
 
 ## The Ram (once per race)
-The first goat of the whole race to **reach or pass** space 17 (start below it) falls head over hooves in love with the Ram and **stops on the Ram's space**; so does the whole stack it carries. The **top goat** of that stack is so dreamy that it **skips its next run** (its Herd card is still played, it just doesn't move): that is the date. Goats below it are not affected and carry it along if they move. After the date the Ram wanders off and every later goat walks straight past. Earplugs on the **top goat** of the arriving stack: that goat cannot hear the Ram, so the goat **directly under it** falls in love and skips its next run instead (the Ram is used up).
-- Stack of 3 or more: the smitten goat steps off and stays on the Ram's space; the goats under it walk on with the rest of the roll, still carrying the earplugged goat on top (bottom blue, middle red, top green with earplugs, 2 steps left: red stays with the Ram, blue carries green 2 more spaces). If the roll ends exactly on the Ram, the others land on top of the smitten goat.
-- Stack of 2: the smitten goat is the one that moves, so both stop on the Ram's space.
-- A goat with earplugs that arrives alone walks straight past and the Ram keeps waiting for the next goat.
+The first goat of the whole race to **reach or pass** space 17 (start below it) falls head over hooves in love with the Ram and **stops on the Ram's space**; so does the whole stack it carries. The **top goat** of that stack is so dreamy that it **skips its next run** (its Herd card is still played, it just doesn't move): that is the date. Goats below it are not affected and carry it along if they move. After the date the Ram wanders off and every later goat walks straight past. Earplugs on the **top goat** of the arriving stack: that goat cannot hear the Ram, so the first goat **under it** that can hear him (usually the one directly under it) falls in love and skips its next run instead (the Ram is used up).
+- If that goat is being carried: it steps off and stays on the Ram's space; the goats under it walk on with the rest of the roll, still carrying the goats that were above it (bottom blue, middle red, top green with earplugs, 2 steps left: red stays with the Ram, blue carries green 2 more spaces). If the roll ends exactly on the Ram, the others land on top of the smitten goat.
+- If that goat is the one that moved (the bottom goat, e.g. a stack of 2): the whole stack stops on the Ram's space.
+- If nobody in the arriving stack can hear him (a lone earplugged goat, or every goat earplugged), they walk straight past and the Ram keeps waiting for the next goat.
 
 ## End of a stage: scoring
 Based on the current ranking:

@@ -80,25 +80,27 @@ export function moveGoat(b, goat, roll) {
 
   const ramReached = !b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly);
   const top = carried.at(-1);
-  // Earplugs on a goat that arrives alone: it cannot hear the Ram and walks straight past; the Ram keeps waiting.
-  if (ramReached && b.ears[top] && carried.length === 1) ev.deafPass = top;
-  if (ramReached && !ev.deafPass) {
-    // Love at first sight: the top goat of the arriving stack falls for the Ram and skips its own next run (the date).
-    // If the top goat wears earplugs, the goat right under it falls in love instead.
+  // Earplugs on the top goat: the first goat below it that can hear the Ram falls in love instead.
+  // If nobody in the arriving stack can hear him, they all walk past and the Ram keeps waiting.
+  let smitten = top;
+  if (b.ears[top]) smitten = carried.slice(0, -1).reverse().find((g) => !b.ears[g]);
+  if (ramReached && !smitten) ev.deafPass = top;
+  if (ramReached && smitten) {
+    // Love at first sight: the smitten goat skips its own next run (the date).
     b.ramUsed = true;
     ev.ram = true;
-    ev.smitten = b.ears[top] ? carried.at(-2) : top;
-    if (b.ears[top]) ev.deaf = top;
-    (b.skips ||= {})[ev.smitten] = true;
-    if (ev.deaf && carried.length >= 3) {
-      // The smitten goat steps off at the Ram; the goats under it walk on with the earplugged goat still on top.
-      carried.splice(carried.indexOf(ev.smitten), 1);
-      stackAt(b, b.cfg.ram).push(ev.smitten);
+    ev.smitten = smitten;
+    if (smitten !== top) ev.deaf = top;
+    (b.skips ||= {})[smitten] = true;
+    if (ev.deaf && smitten !== goat) {
+      // The smitten goat steps off at the Ram; the goats under it walk on, still carrying the earplugged goats above it.
+      carried.splice(carried.indexOf(smitten), 1);
+      stackAt(b, b.cfg.ram).push(smitten);
       stackAt(b, dest).push(...carried);
       ev.dropped = true;
       ev.carried = carried.slice(1);
     } else {
-      // The whole stack stops on the Ram's space (with 2 goats the smitten goat is the bottom one, so the rider stays too).
+      // The whole stack stops on the Ram's space (the smitten goat is the one moving, so its riders stay too).
       ev.to = b.cfg.ram;
       stackAt(b, b.cfg.ram).push(...carried);
     }
