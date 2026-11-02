@@ -56,13 +56,113 @@ t("Ram: a lone goat that reaches it stops on it and skips its next run; later go
   assert.equal(moveGoat(b, "blue", 3).ram, false); // Ram already used this race
   assert.equal(moveGoat(b, "green", 2).skipped, true);
 });
-t("Earplugs on the top goat: the stack still stops, but nobody skips", () => {
+t("Earplugs on a lone goat: it walks past the Ram and the Ram stays available", () => {
+  const b = board({ 2: ["green"], 15: ["white"] }, { ears: { white: true } });
+  const e = moveGoat(b, "white", 3);
+  assert.equal(e.ram, false);
+  assert.equal(e.deafPass, "white");
+  assert.equal(b.ramUsed, false);
+  assert.deepEqual(b.spaces[18], ["white"]);
+  assert.equal(b.skips.white, undefined);
+});
+t("Earplugs on top of 2: the goat under it falls in love and both stop at the Ram", () => {
   const b = board({ 2: ["green"], 16: ["yellow", "white"] }, { ears: { white: true } });
+  const e = moveGoat(b, "yellow", 3);
+  assert.equal(e.ram, true);
+  assert.equal(e.smitten, "yellow");
+  assert.equal(e.deaf, "white");
+  assert.equal(e.to, 17);
+  assert.deepEqual(b.spaces[17], ["yellow", "white"]);
+  assert.equal(b.skips.yellow, true);
+  assert.equal(b.skips.white, undefined);
+  assert.equal(b.ramUsed, true);
+});
+t("Earplugs on top of 3+: the goat under it stays at the Ram, the rest walk on (owner's example)", () => {
+  // blue bottom, red middle, green top with earplugs; they reach the Ram with 2 steps left
+  const b = board({ 2: ["yellow"], 16: ["blue", "red", "green"] }, { ears: { green: true } });
+  const e = moveGoat(b, "blue", 3);
+  assert.equal(e.ram, true);
+  assert.equal(e.smitten, "red");
+  assert.equal(e.dropped, true);
+  assert.equal(e.to, 19);
+  assert.deepEqual(e.carried, ["green"]);
+  assert.deepEqual(b.spaces[17], ["red"]);
+  assert.deepEqual(b.spaces[19], ["blue", "green"]);
+  assert.equal(b.skips.red, true);
+  assert.equal(b.ramUsed, true);
+  // a stack of 4 drops only the goat right under the earplugged one
+  const c = board({ 16: ["blue", "red", "white", "green"] }, { ears: { green: true } });
+  moveGoat(c, "blue", 2);
+  assert.deepEqual(c.spaces[17], ["white"]);
+  assert.deepEqual(c.spaces[18], ["blue", "red", "green"]);
+  // exactly on the Ram's space: the smitten goat is there first and the others land on it
+  const d = board({ 16: ["blue", "red", "green"] }, { ears: { green: true } });
+  moveGoat(d, "blue", 1);
+  assert.deepEqual(d.spaces[17], ["red", "blue", "green"]);
+});
+t("Earplugs on the top two goats: the first goat below them that can hear falls in love", () => {
+  // blue bottom, red and green (top) both earplugged: blue is smitten and, as the mover, stops with the stack
+  const b = board({ 16: ["blue", "orange", "green"] }, { ears: { green: true, orange: true } });
+  const e = moveGoat(b, "blue", 3);
+  assert.equal(e.smitten, "blue");
+  assert.equal(e.to, 17);
+  assert.deepEqual(b.spaces[17], ["blue", "orange", "green"]);
+  // 4 goats, top two earplugged: the second goat drops off, the rest walk on
+  const c = board({ 16: ["blue", "white", "orange", "green"] }, { ears: { green: true, orange: true } });
+  const f = moveGoat(c, "blue", 3);
+  assert.equal(f.smitten, "white");
+  assert.deepEqual(c.spaces[17], ["white"]);
+  assert.deepEqual(c.spaces[19], ["blue", "orange", "green"]);
+  // everybody earplugged: the stack walks past and the Ram keeps waiting
+  const d = board({ 16: ["blue", "green"] }, { ears: { green: true, blue: true } });
+  const g = moveGoat(d, "blue", 3);
+  assert.equal(g.ram, false);
+  assert.equal(g.deafPass, "green");
+  assert.equal(d.ramUsed, false);
+  assert.deepEqual(d.spaces[19], ["blue", "green"]);
+});
+t("Earplugs on a goat that is not on top do nothing", () => {
+  const b = board({ 2: ["green"], 16: ["yellow", "white"] }, { ears: { yellow: true } });
   const e = moveGoat(b, "yellow", 2);
   assert.equal(e.ram, true);
-  assert.equal(e.deaf, true);
-  assert.deepEqual(b.spaces[17], ["yellow", "white"]);
-  assert.equal(b.skips.white, undefined);
+  assert.equal(e.smitten, "white");
+});
+t("stage summary breakdown adds up to each player's stage total (runs count as hay, last run included)", () => {
+  for (let seed = 1; seed <= 40; seed++) {
+    const s = newGame({ players: 3, seed });
+    let k = seed;
+    while (!s.finished) {
+      const stagesBefore = s.stats.history.length;
+      const acts = legalActions(s, s.turn).filter((a) => a.type !== "scout");
+      k = (k * 7 + 3) % 11; // a fixed mix of runs, leg bets, cheers and pledges
+      apply(s, k < 5 ? acts.find((a) => a.type === "run") || acts[0] : acts[k % acts.length]);
+      if (s.stats.history.length > stagesBefore) {
+        const h = s.stats.history.at(-1), prev = s.stats.history.at(-2);
+        h.breakdown.forEach((b, i) => {
+          assert.equal(b.hoofD, b.hoofs * s.cfg.hoofHay);
+          assert.equal(b.legs.reduce((a, l) => a + l.d, 0) + b.hoofD + b.cheers.reduce((a, c) => a + c.d, 0) + b.floor, b.net);
+          assert.ok(b.floor >= 0);
+          if (prev) assert.equal(h.hays[i] - prev.hays[i], b.net); // nothing else moves hay during a stage
+        });
+        if (!s.finished) assert.equal(h.breakdown.reduce((a, b) => a + b.hoofs, 0), 5); // all five runs of a full stage are counted
+      }
+    }
+  }
+});
+t("stage breakdown shows the 0-floor as its own amount", () => {
+  const s = newGame({ players: 3, seed: 3 });
+  // green leads, orange second; blue is so far behind that its last run cannot change that
+  s.spaces = { 1: ["blue"], 10: ["yellow"], 11: ["white"], 12: ["orange"], 13: ["green"] };
+  s.deck = ["blue"]; s.played = ["green", "orange", "white", "yellow"]; s.turn = 0;
+  s.players[0].hay = 1;
+  s.players[0].legs = ["white", "yellow", "white", "yellow", "blue"].map((goat) => ({ goat, value: 6 }));
+  apply(s, { type: "run" });
+  const b = s.stats.history.at(-1).breakdown[0];
+  const sum = b.legs.reduce((a, l) => a + l.d, 0) + b.hoofD; // -5 + 2
+  assert.equal(sum, -3);
+  assert.equal(s.stats.history.at(-1).hays[0], 0);
+  assert.equal(b.net, -1);
+  assert.equal(b.floor, 2);
 });
 t("pest cards: 3 at the start, +1 each new stage up to 4, and the drawn card is recorded", () => {
   const s = newGame({ players: 3, seed: 4 });
