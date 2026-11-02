@@ -8,7 +8,9 @@ import { goatSvg, ramSvg, avatarSvg, AVATARS, GOAT_BLURB } from "./art.js";
 const $ = (id) => document.getElementById(id);
 const COL = { blue: "#4f95e8", yellow: "#f7c52b", green: "#58b868", orange: "#e8412c", white: "#f8f4ee" };
 const SPEEDS = { slow: 3, normal: 1, fast: 0.45 };
-const mult = () => SPEEDS[settings.speed] ?? 1;
+// ?speed=0.02 in the URL overrides the speed setting (only used by the smoke test; not in the menu).
+const URL_SPEED = Number(new URLSearchParams(location.search).get("speed")) || 0;
+const mult = () => URL_SPEED || (SPEEDS[settings.speed] ?? 1);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms * mult()));
 // Goat names always carry their colour ("Goatzilla (yellow)"); orange goat is drawn red. gShort = name only (board tags).
 const COLNAME = { blue: ["blue", "blauw"], yellow: ["yellow", "geel"], green: ["green", "groen"], orange: ["red", "rood"], white: ["white", "wit"] };
