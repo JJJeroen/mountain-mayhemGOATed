@@ -26,7 +26,7 @@ Each goat has its own six-sided die. Averages are about equal; the spread differ
 | White "Goaty Perry" | 1 1 2 2 3 3 | Average (placeholder for a special trait) |
 
 ## Setup
-Shuffle the five goats' dice rolls for the start: each goat rolls its die once and starts on that space (0 is treated as 1). Goats on the same space form a stack, in random order. Each player starts with **3 hay**, one **Winner pledge** and one **Loser pledge** and **3 trick cards** drawn from the Trick deck. At the start of every later stage each player draws 1 trick card (hand limit 4, discard down).
+Shuffle the five goats' dice rolls for the start: each goat rolls its die once and starts on that space (0 is treated as 1). Goats on the same space form a stack, in random order. Each player starts with **3 hay**, one **Winner pledge** and one **Loser pledge** and **3 trick cards** drawn from the Trick deck. At the start of every later stage each player draws 1 trick card, unless they already hold 4 (then they draw nothing). Cards never expire. When the Trick deck runs out, the discard pile is shuffled into a new deck.
 
 ## A stage (round)
 A stage uses a **Herd deck**: five cards, one per goat, shuffled at the start of every stage. The stage ends when the last card has been played. Each goat therefore moves **exactly once per stage**.

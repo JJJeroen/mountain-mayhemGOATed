@@ -209,7 +209,10 @@ function drawTrick(s, p) {
     s.trickDeck = shuffle(s, s.discard);
     s.discard = [];
   }
-  if (s.trickDeck.length) p.hand.push(s.trickDeck.pop());
+  if (!s.trickDeck.length) return null;
+  const card = s.trickDeck.pop();
+  p.hand.push(card);
+  return card;
 }
 
 function startStage(s) {
@@ -223,7 +226,8 @@ function startStage(s) {
     p.legs = [];
     p.cheers = [];
     p.knownTop = null;
-    if (s.stage > 1 && p.hand.length < s.cfg.handMax) drawTrick(s, p);
+    // newTrick: the card drawn for this stage (null when the hand is full or the deck is empty), shown to the player.
+    p.newTrick = s.stage > 1 && p.hand.length < s.cfg.handMax ? drawTrick(s, p) : null;
   }
 }
 
