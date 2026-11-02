@@ -540,17 +540,17 @@ function confetti() {
 const myName = () => (settings.name && settings.name !== "You" ? settings.name : L("You", "Jij"));
 const seatLabel = (i) => (i === 0 ? L("You", "Jij") : seats[i].name);
 
-async function showStageScore(before, hayAfter, rank) {
+async function showStageScore(rank) {
   sfx("stage");
-  const rows = s.players.map((p, i) => {
-    const pills = [];
-    for (const l of before[i].legs) {
-      const d = l.goat === rank[0] ? l.value : l.goat === rank[1] ? 1 : -1;
-      pills.push({ d, html: `${goatSvg(l.goat, "neutral", { size: 20 })} ${d > 0 ? "+" : ""}${d}` });
-    }
-    if (before[i].hoofs) pills.push({ d: before[i].hoofs, html: `👣 +${before[i].hoofs}` });
-    for (const c of before[i].cheers) { const ok = rank[0] === c.goat; pills.push({ d: ok ? 2 : 0, html: `📣 ${ok ? "+2" : "0"}` }); }
-    return { pills, net: hayAfter[i] - before[i].hay };
+  // Everything comes from the engine's own stage score, so the pills always add up to the total.
+  const bd = s.stats.history.at(-1)?.breakdown;
+  if (!bd) return; // an old cached engine.js without breakdowns: skip the summary rather than crash
+  const rows = bd.map((b) => {
+    const pills = b.legs.map((l) => ({ d: l.d, html: `${goatSvg(l.goat, "neutral", { size: 20 })} ${l.d > 0 ? "+" : ""}${l.d}` }));
+    if (b.hoofs) pills.push({ d: b.hoofD, html: `👣 +${b.hoofD}` });
+    for (const c of b.cheers) pills.push({ d: c.d, html: `📣 ${c.d ? "+" + c.d : "0"}` });
+    if (b.floor) pills.push({ d: b.floor, html: `🛟 +${b.floor} ${L("(hay never goes below 0)", "(hooi gaat nooit onder 0)")}` });
+    return { pills, net: b.net };
   });
   const rk = rank.map((g, i) => `<div>${goatSvg(g, i === 0 ? "love" : "neutral", { size: 52 })}${ord(i)}</div>`).join("");
   const o = showOverlay(`<div class="panel"><h2>${L("Stage", "Etappe")} ${s.stage - (s.finished ? 0 : 1)} ${L("complete", "klaar")}</h2><div class="rank">${rk}</div>
@@ -660,7 +660,6 @@ async function playTurnInner(myGen) {
     if (act.type !== "scout") await new Promise((r) => setTimeout(r, Math.max(0, 1100 * mult() - (performance.now() - t0))));
   }
   if (myGen !== gen) return false;
-  const before = s.players.map((p) => ({ legs: p.legs.map((l) => ({ ...l })), hoofs: p.hoofs, cheers: p.cheers.map((c) => ({ ...c })), hay: p.hay }));
   const leaderBefore = ranking(s)[0];
   const stageBefore = s.stage;
   freezeGoats();
@@ -741,10 +740,9 @@ async function playTurnInner(myGen) {
   const ended = events.some((e) => e.t === "end");
   if (stageEnded || ended) {
     const stageRank = ranking(s);
-    const hayAfterStage = ended ? s.stats.history.at(-1).hays : s.players.map((p) => p.hay);
     await sleep(500);
     if (myGen !== gen) return false;
-    await showStageScore(before, hayAfterStage, stageRank);
+    await showStageScore(stageRank);
     if (myGen !== gen) return false;
     if (ended) { saveGame(); await showFinal(s.stats.preFinal); return false; }
     renderGoats(); renderHud();
