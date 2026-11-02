@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8">
+<!-- Source for the Android launcher icon and splash. Render with art-src/render-icons.mjs (needs a local web server on web/). -->
+<style>
+body{margin:0;background:transparent}
+.L{width:432px;height:432px;position:relative;overflow:hidden}
+.sky{position:absolute;inset:0;background:linear-gradient(#6fbdee,#bfe6f7 70%,#dff3c9)}
+.sun{position:absolute;left:216px;top:175px;width:240px;height:240px;margin:-120px;border-radius:50%;background:radial-gradient(#fff6b0,#ffd34a 60%,#ffd34a00 72%)}
+.mt{position:absolute;left:0;top:0;width:432px;height:432px}
+.stack{position:absolute;left:50%;transform:translateX(-50%);bottom:180px}
+.stack svg{display:block;margin:-46px auto 0}
+.splash{width:1280px;height:1920px;position:relative;overflow:hidden;background:linear-gradient(#7cc4ef,#bfe6f7 55%,#dff3c9)}
+.splash .icon{position:absolute;left:50%;top:50%;width:432px;height:432px;margin:-216px;transform:scale(1.4)}
+</style>
+<div id="bg" class="L"><div class="sky"></div><div class="sun"></div>
+ <svg class="mt" viewBox="0 0 432 432"><path d="M-20 440 L216 252 L452 440Z" fill="#8a9bb0" stroke="#3b2a22" stroke-width="7" stroke-linejoin="round"/><path d="M216 252 L184 278 L200 274 L216 288 L232 274 L248 278Z" fill="#fff"/><path d="M-20 440 L-20 372 L100 338 L216 368 L330 330 L452 360 L452 440Z" fill="#7fe08a" stroke="#3b2a22" stroke-width="7" stroke-linejoin="round"/></svg></div>
+<div id="fg" class="L"><div class="stack" id="stack"></div></div>
+<script type="module">
+import { goatSvg } from "../web/art.js";
+stack.innerHTML = [goatSvg("blue", "love", { size: 118 }), goatSvg("orange", "effort", { size: 142 })].join("");
+</script>
