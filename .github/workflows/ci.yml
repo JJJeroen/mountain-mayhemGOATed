@@ -24,7 +24,8 @@ jobs:
 
   smoke:
     # Plays full games in headless Chromium (3 and 4 players); fails on any page or console error.
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.56 cannot install its browser on ubuntu-latest (26.04). Bump both together.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
