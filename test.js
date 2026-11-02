@@ -56,14 +56,49 @@ t("Ram: a lone goat that reaches it stops on it and skips its next run; later go
   assert.equal(moveGoat(b, "blue", 3).ram, false); // Ram already used this race
   assert.equal(moveGoat(b, "green", 2).skipped, true);
 });
-t("Earplugs on the top goat: the stack walks past the Ram and the Ram stays available", () => {
-  const b = board({ 2: ["green"], 16: ["yellow", "white"] }, { ears: { white: true } });
-  const e = moveGoat(b, "yellow", 2);
+t("Earplugs on a lone goat: it walks past the Ram and the Ram stays available", () => {
+  const b = board({ 2: ["green"], 15: ["white"] }, { ears: { white: true } });
+  const e = moveGoat(b, "white", 3);
   assert.equal(e.ram, false);
   assert.equal(e.deafPass, "white");
   assert.equal(b.ramUsed, false);
-  assert.deepEqual(b.spaces[18], ["yellow", "white"]);
+  assert.deepEqual(b.spaces[18], ["white"]);
   assert.equal(b.skips.white, undefined);
+});
+t("Earplugs on top of 2: the goat under it falls in love and both stop at the Ram", () => {
+  const b = board({ 2: ["green"], 16: ["yellow", "white"] }, { ears: { white: true } });
+  const e = moveGoat(b, "yellow", 3);
+  assert.equal(e.ram, true);
+  assert.equal(e.smitten, "yellow");
+  assert.equal(e.deaf, "white");
+  assert.equal(e.to, 17);
+  assert.deepEqual(b.spaces[17], ["yellow", "white"]);
+  assert.equal(b.skips.yellow, true);
+  assert.equal(b.skips.white, undefined);
+  assert.equal(b.ramUsed, true);
+});
+t("Earplugs on top of 3+: the goat under it stays at the Ram, the rest walk on (owner's example)", () => {
+  // blue bottom, red middle, green top with earplugs; they reach the Ram with 2 steps left
+  const b = board({ 2: ["yellow"], 16: ["blue", "red", "green"] }, { ears: { green: true } });
+  const e = moveGoat(b, "blue", 3);
+  assert.equal(e.ram, true);
+  assert.equal(e.smitten, "red");
+  assert.equal(e.dropped, true);
+  assert.equal(e.to, 19);
+  assert.deepEqual(e.carried, ["green"]);
+  assert.deepEqual(b.spaces[17], ["red"]);
+  assert.deepEqual(b.spaces[19], ["blue", "green"]);
+  assert.equal(b.skips.red, true);
+  assert.equal(b.ramUsed, true);
+  // a stack of 4 drops only the goat right under the earplugged one
+  const c = board({ 16: ["blue", "red", "white", "green"] }, { ears: { green: true } });
+  moveGoat(c, "blue", 2);
+  assert.deepEqual(c.spaces[17], ["white"]);
+  assert.deepEqual(c.spaces[18], ["blue", "red", "green"]);
+  // exactly on the Ram's space: the smitten goat is there first and the others land on it
+  const d = board({ 16: ["blue", "red", "green"] }, { ears: { green: true } });
+  moveGoat(d, "blue", 1);
+  assert.deepEqual(d.spaces[17], ["red", "blue", "green"]);
 });
 t("Earplugs on a goat that is not on top do nothing", () => {
   const b = board({ 2: ["green"], 16: ["yellow", "white"] }, { ears: { yellow: true } });

@@ -79,18 +79,29 @@ export function moveGoat(b, goat, roll) {
   const ev = { goat, roll, steps, from, to: dest, slowed, carried: carried.slice(1), ram: false, finished: false };
 
   const ramReached = !b.ramUsed && dest >= b.cfg.ram && (from < b.cfg.ram || !b.cfg.ramCrossOnly);
-  // Earplugs: if the goat on top of the arriving stack cannot hear the Ram, the whole stack walks straight past
-  // and the Ram keeps waiting for the next goat.
-  if (ramReached && b.ears[carried.at(-1)]) ev.deafPass = carried.at(-1);
+  const top = carried.at(-1);
+  // Earplugs on a goat that arrives alone: it cannot hear the Ram and walks straight past; the Ram keeps waiting.
+  if (ramReached && b.ears[top] && carried.length === 1) ev.deafPass = top;
   if (ramReached && !ev.deafPass) {
-    // Love at first sight: the whole moving stack stops on the Ram's space, and its top goat is so smitten
-    // that it skips its own next run.
+    // Love at first sight: the top goat of the arriving stack falls for the Ram and skips its own next run (the date).
+    // If the top goat wears earplugs, the goat right under it falls in love instead.
     b.ramUsed = true;
     ev.ram = true;
-    ev.to = b.cfg.ram;
-    ev.smitten = carried.at(-1);
+    ev.smitten = b.ears[top] ? carried.at(-2) : top;
+    if (b.ears[top]) ev.deaf = top;
     (b.skips ||= {})[ev.smitten] = true;
-    stackAt(b, b.cfg.ram).push(...carried);
+    if (ev.deaf && carried.length >= 3) {
+      // The smitten goat steps off at the Ram; the goats under it walk on with the earplugged goat still on top.
+      carried.splice(carried.indexOf(ev.smitten), 1);
+      stackAt(b, b.cfg.ram).push(ev.smitten);
+      stackAt(b, dest).push(...carried);
+      ev.dropped = true;
+      ev.carried = carried.slice(1);
+    } else {
+      // The whole stack stops on the Ram's space (with 2 goats the smitten goat is the bottom one, so the rider stays too).
+      ev.to = b.cfg.ram;
+      stackAt(b, b.cfg.ram).push(...carried);
+    }
   } else {
     stackAt(b, dest).push(...carried);
   }
