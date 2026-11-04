@@ -361,6 +361,15 @@ function openTricks() {
   p.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => pickTrickTarget(b.dataset.c)));
 }
 
+/** Whistle, after the confirm: show the next goat; from here the card is committed (no Back). */
+function whistleReveal(card) {
+  const T = TRICKS[card];
+  const top = s.deck[0];
+  const p = openSheet(`<h2>${T.e} ${T.name}</h2><p>${L("You peek: the next goat to run is...", "Je gluurt: de volgende geit die rent is...")}</p><div class="center">${goatSvg(top, "neutral", { size: 140 })}<p><b>${gName(top)}</b></p></div><p>${L("Keep it on top, or bury it at the bottom of the Herd deck?", "Laat je hem bovenop liggen, of stop je hem onderaan de kudde-stapel?")}</p><div class="row"><button class="btn go" id="keep">${L("Keep on top", "Bovenop laten")}</button><button class="btn" id="bury">${L("Bury it", "Onderop stoppen")}</button></div><p class="sub">${L("Others see that you whistled, not what you saw.", "De anderen zien dát je floot, niet wat je zag.")}</p>`, { dismiss: false });
+  p.querySelector("#keep").onclick = () => { closeSheet(); submit({ type: "trick", card, args: { bury: false } }); };
+  p.querySelector("#bury").onclick = () => { closeSheet(); submit({ type: "trick", card, args: { bury: true } }); };
+}
+
 function pickTrickTarget(card) {
   const opts = trickOptions(s, card);
   const T = TRICKS[card];
@@ -373,11 +382,10 @@ function pickTrickTarget(card) {
     return wire(p);
   }
   if (card === "whistle") {
-    const top = s.deck[0];
-    const p = openSheet(`<h2>${T.e} ${T.name}</h2><p>${L("You peek: the next goat to run is...", "Je gluurt: de volgende geit die rent is...")}</p><div class="center">${goatSvg(top, "neutral", { size: 140 })}<p><b>${gName(top)}</b></p></div><p>${L("Keep it on top, or bury it at the bottom of the Herd deck?", "Laat je hem bovenop liggen, of stop je hem onderaan de kudde-stapel?")}</p><div class="row"><button class="btn go" id="keep">${L("Keep on top", "Bovenop laten")}</button><button class="btn" id="bury">${L("Bury it", "Onderop stoppen")}</button></div><p class="sub">${L("Others see that you whistled, not what you saw.", "De anderen zien dát je floot, niet wat je zag.")}</p>`, { dismiss: false });
-    p.querySelector("#keep").onclick = () => { closeSheet(); submit({ type: "trick", card, args: { bury: false } }); };
-    p.querySelector("#bury").onclick = () => { closeSheet(); submit({ type: "trick", card, args: { bury: true } }); };
-    return;
+    // Confirm first: once the next goat is shown the card is committed (backing out then would be a free peek).
+    const c0 = openSheet(`<h2>${T.e} ${T.name}</h2><p>${T.d}</p><p>${L("You will see the next goat, then choose. After that you can't take the card back.", "Je ziet de volgende geit en kiest dan. Daarna kun je de kaart niet meer terugnemen.")}</p><div class="row"><button class="btn go" id="peek">${L("Whistle and peek", "Fluiten en gluren")}</button></div>${back}`);
+    c0.querySelector("#peek").onclick = () => whistleReveal(card);
+    return wire(c0);
   }
   if (card === "swap") {
     const singles = [...new Set(opts.flatMap((o) => [o.a, o.b]))];
