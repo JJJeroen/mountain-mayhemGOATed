@@ -21,3 +21,21 @@ jobs:
         run: |
           node sim.js --quick --games 40 --procs 2 --n 6 | tee sim.out
           grep -q ": 40 games ===" sim.out
+
+  smoke:
+    # Plays full games in headless Chromium (3 and 4 players); fails on any page or console error.
+    # Pinned: Playwright 1.56 cannot install its browser on ubuntu-latest (26.04). Bump both together.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npm run smoke
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-failure
+          path: smoke-fail-*.png

@@ -11,9 +11,10 @@
     "sync": "cp engine.js bots.js web/",
     "check:sync": "diff -q engine.js web/engine.js && diff -q bots.js web/bots.js",
     "sim": "node sim.js --quick --games 400 --procs 4",
+    "smoke": "node smoke.mjs",
     "cap:sync": "cap sync android"
   },
   "engines": { "node": ">=22" },
-  "devDependencies": { "@capacitor/cli": "^8.5.2" },
+  "devDependencies": { "@capacitor/cli": "^8.5.2", "playwright": "1.56.1" },
   "dependencies": { "@capacitor/android": "^8.5.2", "@capacitor/core": "^8.5.2" }
 }
